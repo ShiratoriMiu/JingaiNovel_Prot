@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
-using System.Linq; // For Linq queries like Where
+using System.Linq;
 
 public class GameManager : MonoBehaviour
 {
@@ -22,10 +22,7 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        // If a choice is displayed, don't advance dialogue on click.
         if (!isChoiceMade) return;
-
-        // On mouse click, go to the next line.
         if (Input.GetMouseButtonDown(0))
         {
             GoToNextLine();
@@ -35,14 +32,10 @@ public class GameManager : MonoBehaviour
     public void LoadScenario(string scenarioName)
     {
         var scenarioFile = Resources.Load<TextAsset>($"Data/{scenarioName}");
-        if (scenarioFile == null)
-        {
-            Debug.LogError($"Scenario file not found: Data/{scenarioName}");
-            return;
-        }
+        if (scenarioFile == null) { Debug.LogError($"Scenario file not found: Data/{scenarioName}"); return; }
         scenario = CSVParser.Parse(scenarioFile);
         currentLine = 0;
-        isChoiceMade = true; // Reset choice state
+        isChoiceMade = true;
         uiController.HideChoices();
         ShowLine();
     }
@@ -57,26 +50,17 @@ public class GameManager : MonoBehaviour
         else
         {
             Debug.Log("End of scenario.");
-            // Optionally, return to title screen or show an end message.
         }
     }
 
     private void ShowLine()
     {
         ScenarioData data = scenario[currentLine];
-
         switch (data.EventType)
         {
-            case "dialogue":
-                HandleDialogue(data);
-                break;
-            case "choice":
-                HandleChoice(data);
-                break;
-            // Add other event types like 'playSound', 'changeScene' etc. here
-            default:
-                Debug.LogWarning($"Unknown event type: {data.EventType}");
-                break;
+            case "dialogue": HandleDialogue(data); break;
+            case "choice": HandleChoice(data); break;
+            default: Debug.LogWarning($"Unknown event type: {data.EventType}"); break;
         }
     }
 
@@ -84,8 +68,7 @@ public class GameManager : MonoBehaviour
     {
         CharacterData character = characterDatabase.GetCharacterData(data.CharacterID);
         string characterName = (character != null) ? character.characterName : data.CharacterID;
-        Sprite expressionSprite = (character != null) ?
-            character.expressions.Find(e => e.name == data.Expression)?.sprite : null;
+        Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.Expression)?.sprite : null;
 
         uiController.ShowDialogue(characterName, data.Dialogue, character);
         uiController.ShowCharacter(expressionSprite);
@@ -100,26 +83,9 @@ public class GameManager : MonoBehaviour
     private void HandleChoice(ScenarioData data)
     {
         isChoiceMade = false;
-
-        // Show the choice prompt
         uiController.ShowDialogue("System", data.Dialogue, null);
-
-        // Find subsequent "option" lines
-        var choices = new List<ScenarioData>();
-        for (int i = currentLine + 1; i < scenario.Count; i++)
-        {
-            if (scenario[i].EventType == "option")
-            {
-                choices.Add(scenario[i]);
-            }
-            else
-            {
-                // Stop when the event type is no longer "option"
-                break;
-            }
-        }
-
-        currentLine += choices.Count; // Skip the option lines in dialogue progression
+        var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.EventType == "option").ToList();
+        currentLine += choices.Count;
         uiController.ShowChoices(choices, OnChoiceSelected);
     }
 
@@ -127,11 +93,9 @@ public class GameManager : MonoBehaviour
     {
         isChoiceMade = true;
         uiController.HideChoices();
-
         if (jumpTarget.ToLower() == "quit")
         {
             Debug.Log("Quitting game.");
-            // Application.Quit(); // This would work in a real build
         }
         else
         {

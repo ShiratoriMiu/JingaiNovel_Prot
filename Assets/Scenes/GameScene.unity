@@ -335,6 +335,7 @@ GameObject:
   - component: {fileID: 451821341}
   - component: {fileID: 451821340}
   - component: {fileID: 451821339}
+  - component: {fileID: 451821343}
   m_Layer: 0
   m_Name: Canvas
   m_TagString: Untagged
@@ -428,6 +429,24 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 0, y: 0}
   m_Pivot: {x: 0, y: 0}
+--- !u!114 &451821343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 451821338}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 634cad96b0941b04eb559f4ac82d6909, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  nameText: {fileID: 709183363}
+  dialogueText: {fileID: 384105439}
+  characterImage: {fileID: 2034397182}
+  backgroundImage: {fileID: 1221155100}
+  choiceButtonsContainer: {fileID: 815535432}
+  choiceButtonTemplate: {fileID: 2070876600}
 --- !u!1 &491006771
 GameObject:
   m_ObjectHideFlags: 0
@@ -1019,6 +1038,53 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1221155098}
   m_CullTransparentMesh: 1
+--- !u!1 &2032222421
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2032222423}
+  - component: {fileID: 2032222422}
+  m_Layer: 0
+  m_Name: Managers
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2032222422
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2032222421}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 597f4813ec843504e8565d365812437c, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  startingScenarioName: scenario_01
+  characterDatabase: {fileID: 11400000, guid: 544a90fc80f4d89438655fe59cb06128, type: 2}
+  uiController: {fileID: 451821343}
+--- !u!4 &2032222423
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2032222421}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &2034397180
 GameObject:
   m_ObjectHideFlags: 0
@@ -1243,3 +1309,4 @@ SceneRoots:
   - {fileID: 936998841}
   - {fileID: 451821342}
   - {fileID: 59510863}
+  - {fileID: 2032222423}
