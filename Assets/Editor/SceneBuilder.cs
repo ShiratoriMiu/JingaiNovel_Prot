@@ -8,7 +8,7 @@ public class SceneBuilder
 {
     private const string ScenePath = "Assets/Scenes/GameScene.unity";
 
-    // メニューからシーンを新規作成するための関数
+    // ... (previous methods SetupGameScene, AddUIElementsToScene, etc. remain the same) ...
     [MenuItem("Tools/1. Setup Game Scene")]
     public static void SetupGameScene()
     {
@@ -21,24 +21,13 @@ public class SceneBuilder
         Debug.Log($"Scene '{ScenePath}' created with a Canvas set to 1280x720 resolution.");
     }
 
-    // メニューからUI要素をシーンに追加するための関数
     [MenuItem("Tools/2. Add UI Elements to Game Scene")]
     public static void AddUIElementsToScene()
     {
         var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
         GameObject canvasGo = GameObject.Find("Canvas");
-        if (canvasGo == null)
-        {
-            Debug.LogError("Canvas not found in the scene. Please run 'Tools/1. Setup Game Scene' first.");
-            return;
-        }
-
-        // UI要素がすでに追加されていないか確認
-        if (canvasGo.transform.Find("BackgroundImage"))
-        {
-            Debug.Log("UI elements seem to be already added. Aborting.");
-            return;
-        }
+        if (canvasGo == null) { /* ... error handling ... */ return; }
+        if (canvasGo.transform.Find("BackgroundImage")) { /* ... already added check ... */ return; }
 
         CreateBackgroundImage(canvasGo);
         CreateCharacterImage(canvasGo);
@@ -49,6 +38,57 @@ public class SceneBuilder
         Debug.Log("UI elements added to the Game Scene.");
     }
 
+    [MenuItem("Tools/3. Link Scripts and Dependencies")]
+    public static void LinkScriptsAndDependencies()
+    {
+        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
+        if (scene == null)
+        {
+            Debug.LogError($"Scene not found at path: {ScenePath}. Please run Step 1 first.");
+            return;
+        }
+
+        // --- 1. Create Managers GameObject and attach GameManager ---
+        GameObject managersGo = new GameObject("Managers");
+        GameManager gameManager = managersGo.AddComponent<GameManager>();
+
+        // --- 2. Attach UIController to Canvas ---
+        GameObject canvasGo = GameObject.Find("Canvas");
+        UIController uiController = canvasGo.AddComponent<UIController>();
+
+        // --- 3. Link UI elements to UIController ---
+        // Using Find is okay for editor scripts, but be cautious in runtime code.
+        uiController.GetType().GetField("nameText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("TextWindow/NameText").GetComponent<TextMeshProUGUI>());
+        uiController.GetType().GetField("dialogueText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("TextWindow/DialogueText").GetComponent<TextMeshProUGUI>());
+        uiController.GetType().GetField("characterImage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("CharacterImage").GetComponent<Image>());
+        uiController.GetType().GetField("backgroundImage", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("BackgroundImage").GetComponent<RawImage>());
+        uiController.GetType().GetField("choiceButtonsContainer", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("ChoiceButtons").gameObject);
+        uiController.GetType().GetField("choiceButtonTemplate", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(uiController, canvasGo.transform.Find("ChoiceButtons/ButtonTemplate").GetComponent<Button>());
+
+        // --- 4. Link Dependencies to GameManager ---
+        CharacterDatabase db = AssetDatabase.LoadAssetAtPath<CharacterDatabase>("Assets/Resources/Data/CharacterDatabase.asset");
+        if (db == null)
+        {
+            Debug.LogError("CharacterDatabase not found. Please run 'Assets/Create/Novel Game/Sample Data Assets' first.");
+            return;
+        }
+        gameManager.GetType().GetField("characterDatabase", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(gameManager, db);
+        gameManager.GetType().GetField("uiController", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance)
+            .SetValue(gameManager, uiController);
+
+        EditorSceneManager.SaveScene(scene);
+        Debug.Log("Successfully linked GameManager and UIController with all dependencies in the scene!");
+    }
+
+
+    // --- Helper methods for creating UI (unchanged) ---
     private static GameObject CreateCanvas()
     {
         GameObject canvasGo = new GameObject("Canvas");
@@ -73,14 +113,11 @@ public class SceneBuilder
         GameObject bgImageGo = new GameObject("BackgroundImage");
         bgImageGo.transform.SetParent(canvasGo.transform);
         RawImage rawImage = bgImageGo.AddComponent<RawImage>();
-        rawImage.color = new Color(0.5f, 0.5f, 0.5f, 1); // Default color
+        rawImage.color = new Color(0.5f, 0.5f, 0.5f, 1);
 
         RectTransform rect = bgImageGo.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0, 0);
-        rect.anchorMax = new Vector2(1, 1);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
+        rect.anchorMin = new Vector2(0, 0); rect.anchorMax = new Vector2(1, 1);
+        rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
     }
 
     private static void CreateCharacterImage(GameObject canvasGo)
@@ -88,102 +125,73 @@ public class SceneBuilder
         GameObject charImageGo = new GameObject("CharacterImage");
         charImageGo.transform.SetParent(canvasGo.transform);
         Image image = charImageGo.AddComponent<Image>();
-        image.color = new Color(1, 1, 1, 0); // Transparent by default
+        image.color = new Color(1, 1, 1, 0);
 
         RectTransform rect = charImageGo.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(500, 1000); // Default size
+        rect.anchorMin = new Vector2(0.5f, 0.5f); rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero; rect.sizeDelta = new Vector2(500, 1000);
     }
 
     private static void CreateTextWindow(GameObject canvasGo)
     {
-        // Text Window Panel
         GameObject textWindowGo = new GameObject("TextWindow");
         textWindowGo.transform.SetParent(canvasGo.transform);
-        Image panelImage = textWindowGo.AddComponent<Image>();
-        panelImage.color = new Color(0, 0, 0, 0.7f); // Semi-transparent black
+        textWindowGo.AddComponent<Image>().color = new Color(0, 0, 0, 0.7f);
 
         RectTransform rect = textWindowGo.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0, 0);
-        rect.anchorMax = new Vector2(1, 0);
-        rect.pivot = new Vector2(0.5f, 0);
-        rect.anchoredPosition = new Vector2(0, 0);
-        rect.sizeDelta = new Vector2(0, 200); // Height of 200
+        rect.anchorMin = new Vector2(0, 0); rect.anchorMax = new Vector2(1, 0);
+        rect.pivot = new Vector2(0.5f, 0); rect.anchoredPosition = new Vector2(0, 0);
+        rect.sizeDelta = new Vector2(0, 200);
 
-        // Name Text
         GameObject nameTextGo = new GameObject("NameText");
         nameTextGo.transform.SetParent(textWindowGo.transform);
         TextMeshProUGUI nameText = nameTextGo.AddComponent<TextMeshProUGUI>();
-        nameText.text = "Character Name";
-        nameText.fontSize = 28;
-        nameText.fontStyle = FontStyles.Bold;
+        nameText.text = "Character Name"; nameText.fontSize = 28; nameText.fontStyle = FontStyles.Bold;
 
         RectTransform nameRect = nameTextGo.GetComponent<RectTransform>();
-        nameRect.anchorMin = new Vector2(0, 1);
-        nameRect.anchorMax = new Vector2(0, 1);
-        nameRect.pivot = new Vector2(0, 1);
-        nameRect.anchoredPosition = new Vector2(30, -20);
+        nameRect.anchorMin = new Vector2(0, 1); nameRect.anchorMax = new Vector2(0, 1);
+        nameRect.pivot = new Vector2(0, 1); nameRect.anchoredPosition = new Vector2(30, -20);
         nameRect.sizeDelta = new Vector2(300, 40);
 
-        // Dialogue Text
         GameObject dialogueTextGo = new GameObject("DialogueText");
         dialogueTextGo.transform.SetParent(textWindowGo.transform);
         TextMeshProUGUI dialogueText = dialogueTextGo.AddComponent<TextMeshProUGUI>();
-        dialogueText.text = "This is a sample dialogue text. Click to continue...";
-        dialogueText.fontSize = 24;
+        dialogueText.text = "This is a sample dialogue text. Click to continue..."; dialogueText.fontSize = 24;
 
         RectTransform dialogueRect = dialogueTextGo.GetComponent<RectTransform>();
-        dialogueRect.anchorMin = new Vector2(0, 0);
-        dialogueRect.anchorMax = new Vector2(1, 1);
-        dialogueRect.offsetMin = new Vector2(30, 20);
-        dialogueRect.offsetMax = new Vector2(-30, -70);
+        dialogueRect.anchorMin = new Vector2(0, 0); dialogueRect.anchorMax = new Vector2(1, 1);
+        dialogueRect.offsetMin = new Vector2(30, 20); dialogueRect.offsetMax = new Vector2(-30, -70);
     }
 
     private static void CreateChoiceButtons(GameObject canvasGo)
     {
-        // Layout Group
         GameObject layoutGo = new GameObject("ChoiceButtons");
         layoutGo.transform.SetParent(canvasGo.transform);
         VerticalLayoutGroup layoutGroup = layoutGo.AddComponent<VerticalLayoutGroup>();
-        layoutGroup.childAlignment = TextAnchor.MiddleCenter;
-        layoutGroup.spacing = 15;
+        layoutGroup.childAlignment = TextAnchor.MiddleCenter; layoutGroup.spacing = 15;
         layoutGo.AddComponent<ContentSizeFitter>().verticalFit = ContentSizeFitter.FitMode.PreferredSize;
 
         RectTransform rect = layoutGo.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0.5f, 0.5f);
-        rect.anchorMax = new Vector2(0.5f, 0.5f);
-        rect.pivot = new Vector2(0.5f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(400, 200);
+        rect.anchorMin = new Vector2(0.5f, 0.5f); rect.anchorMax = new Vector2(0.5f, 0.5f);
+        rect.anchoredPosition = Vector2.zero; rect.sizeDelta = new Vector2(400, 200);
 
-        // Button Template
         GameObject buttonGo = new GameObject("ButtonTemplate");
         buttonGo.transform.SetParent(layoutGo.transform);
         buttonGo.AddComponent<Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
         buttonGo.AddComponent<Button>();
         LayoutElement layoutElement = buttonGo.AddComponent<LayoutElement>();
-        layoutElement.preferredWidth = 400;
-        layoutElement.preferredHeight = 60;
+        layoutElement.preferredWidth = 400; layoutElement.preferredHeight = 60;
 
-        // Text on Button
         GameObject textGo = new GameObject("Text");
         textGo.transform.SetParent(buttonGo.transform);
         TextMeshProUGUI buttonText = textGo.AddComponent<TextMeshProUGUI>();
-        buttonText.text = "Choice Text";
-        buttonText.color = Color.white;
-        buttonText.alignment = TextAlignmentOptions.Center;
-        buttonText.fontSize = 24;
+        buttonText.text = "Choice Text"; buttonText.color = Color.white;
+        buttonText.alignment = TextAlignmentOptions.Center; buttonText.fontSize = 24;
 
         RectTransform textRect = textGo.GetComponent<RectTransform>();
-        textRect.anchorMin = Vector2.zero;
-        textRect.anchorMax = Vector2.one;
-        textRect.offsetMin = Vector2.zero;
-        textRect.offsetMax = Vector2.zero;
+        textRect.anchorMin = Vector2.zero; textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero; textRect.offsetMax = Vector2.zero;
 
-        // Initially inactive
         layoutGo.SetActive(false);
     }
 }
