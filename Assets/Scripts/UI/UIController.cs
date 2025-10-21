@@ -3,6 +3,8 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 using System; // For Action
+using System.Collections;
+using System.Text;
 
 public class UIController : MonoBehaviour
 {
@@ -14,16 +16,71 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject choiceButtonsContainer;
     [SerializeField] private Button choiceButtonTemplate;
 
+    [Header("Typing Effect")]
+    [SerializeField] private float charsPerSecond = 10f;
+    public bool IsTyping { get; private set; }
+
+    private Coroutine typingCoroutine;
+    private string fullDialogueText;
+
     public void ShowDialogue(string characterName, string dialogue, CharacterData characterData)
     {
         nameText.text = characterName;
-        // Example of using character-specific data. Add a 'nameColor' to CharacterData to use this.
-        // nameText.color = (characterData != null) ? characterData.nameColor : Color.white;
+        fullDialogueText = dialogue;
 
-        dialogueText.text = dialogue;
-
-        // TODO: Implement text reveal effect (typewriter) in a future step
+        if (typingCoroutine != null)
+        {
+            StopCoroutine(typingCoroutine);
+        }
+        typingCoroutine = StartCoroutine(TypeText(dialogue));
     }
+
+    public void SkipTyping()
+    {
+        if (IsTyping)
+        {
+            StopCoroutine(typingCoroutine);
+            dialogueText.text = fullDialogueText;
+            IsTyping = false;
+            typingCoroutine = null;
+        }
+    }
+
+    private IEnumerator TypeText(string text)
+    {
+        IsTyping = true;
+        dialogueText.text = "";
+        StringBuilder stringBuilder = new StringBuilder();
+        bool isTag = false;
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+
+            if (c == '<')
+            {
+                isTag = true;
+            }
+
+            stringBuilder.Append(c);
+
+            if (c == '>')
+            {
+                isTag = false;
+            }
+
+            dialogueText.text = stringBuilder.ToString();
+
+            if (!isTag && c != ' ')
+            {
+                yield return new WaitForSeconds(1f / charsPerSecond);
+            }
+        }
+
+        IsTyping = false;
+        typingCoroutine = null;
+    }
+
 
     public void ShowCharacter(Sprite sprite)
     {
