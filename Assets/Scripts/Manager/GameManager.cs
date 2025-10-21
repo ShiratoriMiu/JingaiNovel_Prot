@@ -16,13 +16,39 @@ public class GameManager : MonoBehaviour
     private bool isChoiceMade = true;
     private bool isScenarioPlaying = false;
 
+    // --- State for Save/Load ---
+    private string currentScenarioName;
+    private GameData currentGameState = new GameData();
+    private SaveLoadUI saveLoadUIInstance;
+
     void Start()
     {
-        LoadScenario(startingScenarioName);
+        // Instantiate managers and UI if they don't exist
+        if (SaveLoadManager.Instance == null)
+        {
+            GameObject managerObj = new GameObject("SaveLoadManager");
+            managerObj.AddComponent<SaveLoadManager>();
+        }
+
+        InstantiateSaveLoadUI();
+        CreateSaveButton();
+
+        // Check if we should load a game or start a new one
+        if (SaveLoadManager.Instance.DataToLoad != null)
+        {
+            ApplyGameData(SaveLoadManager.Instance.DataToLoad);
+        }
+        else
+        {
+            LoadScenario(startingScenarioName, 0);
+        }
     }
 
     void Update()
     {
+        // Do not process clicks if the Save/Load UI is active
+        if (saveLoadUIInstance != null && saveLoadUIInstance.gameObject.activeInHierarchy) return;
+
         if (!isScenarioPlaying || !isChoiceMade) return;
 
         if (Input.GetMouseButtonDown(0))
@@ -38,12 +64,14 @@ public class GameManager : MonoBehaviour
         }
     }
 
-    public void LoadScenario(string scenarioName)
+    public void LoadScenario(string scenarioName, int startLine)
     {
+        currentScenarioName = scenarioName;
         var scenarioFile = Resources.Load<TextAsset>($"Data/{scenarioName}");
         if (scenarioFile == null) { Debug.LogError($"Scenario file not found: Data/{scenarioName}"); return; }
+
         scenario = CSVParser.Parse(scenarioFile);
-        currentLine = 0;
+        currentLine = Mathf.Clamp(startLine, 0, scenario.Count - 1);
         isChoiceMade = true;
         isScenarioPlaying = true;
         uiController.HideChoices();
@@ -67,6 +95,17 @@ public class GameManager : MonoBehaviour
     private void ShowLine()
     {
         ScenarioData data = scenario[currentLine];
+
+        // Update current game state
+        currentGameState.scenarioName = currentScenarioName;
+        currentGameState.currentLineIndex = currentLine;
+        currentGameState.characterID = data.CharacterID;
+        currentGameState.expression = data.Expression;
+        if (!string.IsNullOrEmpty(data.BackgroundImage))
+        {
+            currentGameState.backgroundImageName = data.BackgroundImage;
+        }
+
         switch (data.EventType)
         {
             case "dialogue": HandleDialogue(data); break;
@@ -91,6 +130,82 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    // --- Save & Load Specific Methods ---
+
+    public GameData GetCurrentGameData()
+    {
+        return currentGameState;
+    }
+
+    private void ApplyGameData(GameData data)
+    {
+        currentGameState = data;
+
+        // Restore background
+        if (!string.IsNullOrEmpty(data.backgroundImageName))
+        {
+            var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.backgroundImageName.Replace(".png", "")}");
+            uiController.ChangeBackground(bgTexture);
+        }
+
+        // Restore character
+        CharacterData character = characterDatabase.GetCharacterData(data.characterID);
+        Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.expression)?.sprite : null;
+        uiController.ShowCharacter(expressionSprite);
+
+        // Load the scenario at the correct line
+        LoadScenario(data.scenarioName, data.currentLineIndex);
+    }
+
+    private void InstantiateSaveLoadUI()
+    {
+        var prefab = Resources.Load<GameObject>("Prefabs/SaveLoadUI");
+        if (prefab != null)
+        {
+            GameObject uiObj = Instantiate(prefab);
+            saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
+            // Typically parents to a canvas, but for simplicity, let it be at root. It will find its canvas.
+        }
+        else
+        {
+            Debug.LogError("SaveLoadUI prefab not found in Resources/Prefabs folder.");
+        }
+    }
+
+    private void CreateSaveButton()
+    {
+        // Find the main canvas in the scene to add the button to
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("No Canvas found in the scene to add the save button.");
+            return;
+        }
+
+        GameObject buttonObj = new GameObject("SaveButton");
+        buttonObj.transform.SetParent(canvas.transform, false);
+
+        UnityEngine.UI.Image image = buttonObj.AddComponent<UnityEngine.UI.Image>();
+        image.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+
+        UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
+        button.onClick.AddListener(() => saveLoadUIInstance.Show(true));
+
+        RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(1, 1);
+        rectTransform.anchorMax = new Vector2(1, 1);
+        rectTransform.pivot = new Vector2(1, 1);
+        rectTransform.anchoredPosition = new Vector2(-20, -20);
+        rectTransform.sizeDelta = new Vector2(120, 50);
+
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform, false);
+        TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = "Save";
+        text.color = Color.white;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+    }
+
     private void HandleChoice(ScenarioData data)
     {
         isChoiceMade = false;
@@ -110,7 +225,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
-            LoadScenario(jumpTarget.Replace(".csv", ""));
+            LoadScenario(jumpTarget.Replace(".csv", ""), 0);
         }
     }
 }

@@ -66,6 +66,7 @@ public class SceneBuilder
         // --- Create Buttons ---
         string[] buttonLabels = { "はじめから", "つづきから", "設定", "終了" };
         Button startGameButton = null;
+        Button continueButton = null;
 
         foreach (string label in buttonLabels)
         {
@@ -73,8 +74,7 @@ public class SceneBuilder
             buttonObj.transform.SetParent(buttonContainer.transform, false);
 
             Image buttonImage = buttonObj.AddComponent<Image>();
-            // A simple default sprite is used here. You might want to assign a custom one.
-            buttonImage.color = new Color(0.15f, 0.15f, 0.15f, 1f); // Dark button color
+            buttonImage.color = new Color(0.15f, 0.15f, 0.15f, 1f);
 
             Button button = buttonObj.AddComponent<Button>();
             buttonObj.AddComponent<LayoutElement>().preferredHeight = 50;
@@ -87,19 +87,27 @@ public class SceneBuilder
             buttonText.alignment = TextAlignmentOptions.Center;
             buttonText.color = Color.white;
 
-            if (label == "はじめから")
-            {
-                startGameButton = button;
-            }
+            if (label == "はじめから") startGameButton = button;
+            if (label == "つづきから") continueButton = button;
         }
 
-        // --- Button Event ---
-        if (startGameButton != null && titleManager != null)
+        // --- Button Events ---
+        if (titleManager != null)
         {
-            UnityEditor.Events.UnityEventTools.AddPersistentListener(
-                startGameButton.onClick,
-                titleManager.StartGame
-            );
+            if (startGameButton != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(
+                    startGameButton.onClick,
+                    titleManager.StartGame
+                );
+            }
+            if (continueButton != null)
+            {
+                UnityEditor.Events.UnityEventTools.AddPersistentListener(
+                    continueButton.onClick,
+                    titleManager.ShowLoadScreen
+                );
+            }
         }
 
         // --- Build Settings ---
