@@ -139,4 +139,84 @@ public class UIPrefabBuilder
         }
         return button;
     }
+
+    [MenuItem("Tools/Create In-Game Menu UI Prefab")]
+    public static void CreateInGameMenuUIPrefab()
+    {
+        string prefabPath = "Assets/Resources/Prefabs/InGameMenuUI.prefab";
+
+        // --- Root Object ---
+        GameObject root = new GameObject("InGameMenuUI");
+        root.AddComponent<RectTransform>();
+        root.AddComponent<CanvasGroup>();
+        InGameMenuUI menuUI = root.AddComponent<InGameMenuUI>();
+
+        // --- Menu Panel ---
+        GameObject menuPanel = CreatePanel(root, "MenuPanel");
+        RectTransform panelRect = menuPanel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.sizeDelta = new Vector2(400, 300);
+        menuPanel.GetComponent<Image>().color = new Color(0.1f, 0.1f, 0.1f, 0.95f);
+
+        // --- Menu Title ---
+        CreateText(menuPanel, "TitleText", "メニュー", 30);
+        // ... positioning for title ...
+
+        // --- Return to Title Button ---
+        Button returnToTitleButton = CreateButton(menuPanel, "ReturnToTitleButton", "タイトルへ戻る");
+        RectTransform returnRect = returnToTitleButton.GetComponent<RectTransform>();
+        returnRect.anchorMin = new Vector2(0.5f, 0.5f);
+        returnRect.anchorMax = new Vector2(0.5f, 0.5f);
+        returnRect.pivot = new Vector2(0.5f, 0.5f);
+        returnRect.anchoredPosition = new Vector2(0, 0);
+        returnRect.sizeDelta = new Vector2(250, 50);
+
+        // --- Close Menu Button ---
+        Button closeMenuButton = CreateButton(menuPanel, "CloseMenuButton", "閉じる");
+        RectTransform closeRect = closeMenuButton.GetComponent<RectTransform>();
+        closeRect.anchorMin = new Vector2(0.5f, 0f);
+        closeRect.anchorMax = new Vector2(0.5f, 0f);
+        closeRect.pivot = new Vector2(0.5f, 0f);
+        closeRect.anchoredPosition = new Vector2(0, 20);
+        closeRect.sizeDelta = new Vector2(180, 50);
+
+        // --- Confirmation Dialog ---
+        GameObject confirmationDialog = CreatePanel(root, "ConfirmationDialog");
+        RectTransform confirmRect = confirmationDialog.GetComponent<RectTransform>();
+        confirmRect.anchorMin = new Vector2(0.5f, 0.5f);
+        confirmRect.anchorMax = new Vector2(0.5f, 0.5f);
+        confirmRect.sizeDelta = new Vector2(500, 250);
+
+        CreateText(confirmationDialog, "ConfirmText", "セーブしていないデータは失われます。\nよろしいですか？", 24);
+
+        Button confirmReturnButton = CreateButton(confirmationDialog, "ConfirmButton", "はい");
+        RectTransform yesRect = confirmReturnButton.GetComponent<RectTransform>();
+        yesRect.anchorMin = new Vector2(0.5f, 0f);
+        yesRect.anchorMax = new Vector2(0.5f, 0f);
+        yesRect.anchoredPosition = new Vector2(-100, 20);
+        yesRect.sizeDelta = new Vector2(120, 50);
+
+        Button cancelReturnButton = CreateButton(confirmationDialog, "CancelButton", "いいえ");
+        RectTransform noRect = cancelReturnButton.GetComponent<RectTransform>();
+        noRect.anchorMin = new Vector2(0.5f, 0f);
+        noRect.anchorMax = new Vector2(0.5f, 0f);
+        noRect.anchoredPosition = new Vector2(100, 20);
+        noRect.sizeDelta = new Vector2(120, 50);
+
+        // --- Wire up references ---
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        menuUI.GetType().GetField("returnToTitleButton", flags).SetValue(menuUI, returnToTitleButton);
+        menuUI.GetType().GetField("closeMenuButton", flags).SetValue(menuUI, closeMenuButton);
+        menuUI.GetType().GetField("confirmationDialog", flags).SetValue(menuUI, confirmationDialog);
+        menuUI.GetType().GetField("confirmReturnButton", flags).SetValue(menuUI, confirmReturnButton);
+        menuUI.GetType().GetField("cancelReturnButton", flags).SetValue(menuUI, cancelReturnButton);
+
+        // --- Create Prefab ---
+        PrefabUtility.SaveAsPrefabAsset(root, prefabPath);
+        GameObject.DestroyImmediate(root);
+
+        Debug.Log($"InGameMenuUI prefab created at '{prefabPath}'");
+    }
 }
