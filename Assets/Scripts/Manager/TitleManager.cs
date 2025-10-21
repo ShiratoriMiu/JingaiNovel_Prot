@@ -45,14 +45,22 @@ public class TitleManager : MonoBehaviour
     private void InstantiateSaveLoadUI()
     {
         var prefab = Resources.Load<GameObject>("Prefabs/SaveLoadUI");
-        if (prefab != null)
-        {
-            GameObject uiObj = Instantiate(prefab);
-            saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
-        }
-        else
+        if (prefab == null)
         {
             Debug.LogError("SaveLoadUI prefab not found in Resources/Prefabs folder.");
+            return;
         }
+
+        // TitleScene is simpler, we assume a Canvas exists and is the only one.
+        // A more robust solution might find a specific canvas by tag or name.
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("TitleManager: No Canvas found in the scene to instantiate the SaveLoadUI.");
+            return;
+        }
+
+        GameObject uiObj = Instantiate(prefab, canvas.transform);
+        saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
     }
 }

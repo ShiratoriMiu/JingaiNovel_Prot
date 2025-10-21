@@ -160,16 +160,21 @@ public class GameManager : MonoBehaviour
     private void InstantiateSaveLoadUI()
     {
         var prefab = Resources.Load<GameObject>("Prefabs/SaveLoadUI");
-        if (prefab != null)
-        {
-            GameObject uiObj = Instantiate(prefab);
-            saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
-            // Typically parents to a canvas, but for simplicity, let it be at root. It will find its canvas.
-        }
-        else
+        if (prefab == null)
         {
             Debug.LogError("SaveLoadUI prefab not found in Resources/Prefabs folder.");
+            return;
         }
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("GameManager: No Canvas found in the scene to instantiate the SaveLoadUI.");
+            return;
+        }
+
+        GameObject uiObj = Instantiate(prefab, canvas.transform);
+        saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
     }
 
     private void CreateSaveButton()
