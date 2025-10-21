@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     private string currentScenarioName;
     private GameData currentGameState = new GameData();
     private SaveLoadUI saveLoadUIInstance;
+    private InGameMenuUI inGameMenuUIInstance;
 
     void Start()
     {
@@ -31,7 +32,9 @@ public class GameManager : MonoBehaviour
         }
 
         InstantiateSaveLoadUI();
+        InstantiateInGameMenuUI();
         CreateSaveButton();
+        CreateMenuButton();
 
         // Check if we should load a game or start a new one
         if (SaveLoadManager.Instance.DataToLoad != null)
@@ -61,8 +64,9 @@ public class GameManager : MonoBehaviour
 
     private void HandleDialogueClick()
     {
-        // Do not process clicks if the Save/Load UI is active or if it's choice time
+        // Do not process clicks if any UI is active or if it's choice time
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
+        if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying || !isChoiceMade) return;
 
         if (uiController.IsTyping)
@@ -223,6 +227,54 @@ public class GameManager : MonoBehaviour
         textObj.transform.SetParent(buttonObj.transform, false);
         TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
         text.text = "Save";
+        text.color = Color.white;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+    }
+
+    private void InstantiateInGameMenuUI()
+    {
+        var prefab = Resources.Load<GameObject>("Prefabs/InGameMenuUI");
+        if (prefab == null)
+        {
+            Debug.LogError("InGameMenuUI prefab not found in Resources/Prefabs folder.");
+            return;
+        }
+
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("GameManager: No Canvas found in the scene to instantiate the InGameMenuUI.");
+            return;
+        }
+
+        GameObject uiObj = Instantiate(prefab, canvas.transform);
+        inGameMenuUIInstance = uiObj.GetComponent<InGameMenuUI>();
+    }
+
+    private void CreateMenuButton()
+    {
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) { /* Error logged in other method */ return; }
+
+        GameObject buttonObj = new GameObject("MenuButton");
+        buttonObj.transform.SetParent(canvas.transform, false);
+
+        buttonObj.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+
+        UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
+        button.onClick.AddListener(() => inGameMenuUIInstance.Show());
+
+        RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0, 1);
+        rectTransform.anchorMax = new Vector2(0, 1);
+        rectTransform.pivot = new Vector2(0, 1);
+        rectTransform.anchoredPosition = new Vector2(20, -20);
+        rectTransform.sizeDelta = new Vector2(120, 50);
+
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform, false);
+        TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = "Menu";
         text.color = Color.white;
         text.alignment = TMPro.TextAlignmentOptions.Center;
     }
