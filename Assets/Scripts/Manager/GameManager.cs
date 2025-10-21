@@ -47,7 +47,7 @@ public class GameManager : MonoBehaviour
     void Update()
     {
         // Do not process clicks if the Save/Load UI is active
-        if (saveLoadUIInstance != null && saveLoadUIInstance.gameObject.activeInHierarchy) return;
+        if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
 
         if (!isScenarioPlaying || !isChoiceMade) return;
 
