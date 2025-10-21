@@ -8,9 +8,12 @@ using System.Text;
 
 public class UIController : MonoBehaviour
 {
+    public event Action OnDialoguePanelClicked;
+
     [Header("UI Elements")]
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
+    [SerializeField] private Button dialoguePanelButton; // The background panel for the dialogue
     [SerializeField] private Image characterImage;
     [SerializeField] private RawImage backgroundImage;
     [SerializeField] private GameObject choiceButtonsContainer;
@@ -22,6 +25,14 @@ public class UIController : MonoBehaviour
 
     private Coroutine typingCoroutine;
     private string fullDialogueText;
+
+    private void Awake()
+    {
+        if (dialoguePanelButton != null)
+        {
+            dialoguePanelButton.onClick.AddListener(() => OnDialoguePanelClicked?.Invoke());
+        }
+    }
 
     public void ShowDialogue(string characterName, string dialogue, CharacterData characterData)
     {
