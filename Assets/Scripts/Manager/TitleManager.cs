@@ -24,8 +24,7 @@ public class TitleManager : MonoBehaviour
         // Ensure no data is loaded when starting a new game
         if (SaveLoadManager.Instance != null)
         {
-            // A bit of a hacky way to clear the data, but effective
-            SaveLoadManager.Instance.GetType().GetField("DataToLoad", System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance).SetValue(SaveLoadManager.Instance, null);
+            SaveLoadManager.Instance.ClearDataToLoad();
         }
         SceneManager.LoadScene("GameScene");
     }
