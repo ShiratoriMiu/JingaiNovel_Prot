@@ -14,6 +14,7 @@ public class GameManager : MonoBehaviour
     private List<ScenarioData> scenario;
     private int currentLine = 0;
     private bool isChoiceMade = true;
+    private bool isScenarioPlaying = false;
 
     void Start()
     {
@@ -22,7 +23,8 @@ public class GameManager : MonoBehaviour
 
     void Update()
     {
-        if (!isChoiceMade) return;
+        if (!isScenarioPlaying || !isChoiceMade) return;
+
         if (Input.GetMouseButtonDown(0))
         {
             if (uiController.IsTyping)
@@ -43,6 +45,7 @@ public class GameManager : MonoBehaviour
         scenario = CSVParser.Parse(scenarioFile);
         currentLine = 0;
         isChoiceMade = true;
+        isScenarioPlaying = true;
         uiController.HideChoices();
         ShowLine();
     }
@@ -56,6 +59,7 @@ public class GameManager : MonoBehaviour
         }
         else
         {
+            isScenarioPlaying = false;
             Debug.Log("End of scenario.");
         }
     }
