@@ -87,4 +87,10 @@ public class SaveLoadManager : MonoBehaviour
         }
         return allData;
     }
+
+    // Called by TitleManager when starting a new game to ensure no data carries over.
+    public void ClearDataToLoad()
+    {
+        DataToLoad = null;
+    }
 }
