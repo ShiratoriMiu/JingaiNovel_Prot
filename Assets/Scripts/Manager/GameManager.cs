@@ -42,26 +42,42 @@ public class GameManager : MonoBehaviour
         {
             LoadScenario(startingScenarioName, 0);
         }
+
+        // Subscribe to the UI click event
+        if (uiController != null)
+        {
+            uiController.OnDialoguePanelClicked += HandleDialogueClick;
+        }
+    }
+
+    private void OnDestroy()
+    {
+        // Unsubscribe to prevent memory leaks
+        if (uiController != null)
+        {
+            uiController.OnDialoguePanelClicked -= HandleDialogueClick;
+        }
+    }
+
+    private void HandleDialogueClick()
+    {
+        // Do not process clicks if the Save/Load UI is active or if it's choice time
+        if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
+        if (!isScenarioPlaying || !isChoiceMade) return;
+
+        if (uiController.IsTyping)
+        {
+            uiController.SkipTyping();
+        }
+        else
+        {
+            GoToNextLine();
+        }
     }
 
     void Update()
     {
-        // Do not process clicks if the Save/Load UI is active
-        if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
-
-        if (!isScenarioPlaying || !isChoiceMade) return;
-
-        if (Input.GetMouseButtonDown(0))
-        {
-            if (uiController.IsTyping)
-            {
-                uiController.SkipTyping();
-            }
-            else
-            {
-                GoToNextLine();
-            }
-        }
+        // Input handling is now managed by UIController's event
     }
 
     public void LoadScenario(string scenarioName, int startLine)
