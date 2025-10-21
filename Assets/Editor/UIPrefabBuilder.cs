@@ -16,10 +16,11 @@ public class UIPrefabBuilder
         GameObject root = new GameObject("SaveLoadUI");
         root.AddComponent<RectTransform>();
 
-        // Add SaveLoadUI component
+        // Add components to root
         SaveLoadUI saveLoadUI = root.AddComponent<SaveLoadUI>();
+        root.AddComponent<CanvasGroup>();
 
-        // --- Main Panel ---
+        // --- Background Panel (for visuals and blocking raycasts) ---
         GameObject mainPanel = CreatePanel(root, "MainPanel");
         RectTransform panelRect = mainPanel.GetComponent<RectTransform>();
         panelRect.anchorMin = new Vector2(0.5f, 0.5f);
@@ -87,12 +88,12 @@ public class UIPrefabBuilder
         }
 
         // --- Wire up references ---
-        saveLoadUI.GetType().GetField("mainPanel", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, mainPanel);
-        saveLoadUI.GetType().GetField("closeButton", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, closeButton);
-        saveLoadUI.GetType().GetField("slotButtons", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, slotButtons);
-        saveLoadUI.GetType().GetField("slotTexts", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, slotTexts);
-        saveLoadUI.GetType().GetField("titleText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, titleText);
-        saveLoadUI.GetType().GetField("notificationText", System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance).SetValue(saveLoadUI, notificationText);
+        var flags = System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance;
+        saveLoadUI.GetType().GetField("closeButton", flags).SetValue(saveLoadUI, closeButton);
+        saveLoadUI.GetType().GetField("slotButtons", flags).SetValue(saveLoadUI, slotButtons);
+        saveLoadUI.GetType().GetField("slotTexts", flags).SetValue(saveLoadUI, slotTexts);
+        saveLoadUI.GetType().GetField("titleText", flags).SetValue(saveLoadUI, titleText);
+        saveLoadUI.GetType().GetField("notificationText", flags).SetValue(saveLoadUI, notificationText);
 
         // --- Create Prefab ---
         if (!Directory.Exists("Assets/Resources/Prefabs"))

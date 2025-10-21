@@ -4,18 +4,25 @@ using TMPro;
 using System.Collections.Generic;
 using System;
 
+[RequireComponent(typeof(CanvasGroup))]
 public class SaveLoadUI : MonoBehaviour
 {
     [Header("UI Elements")]
-    [SerializeField] private GameObject mainPanel;
     [SerializeField] private Button closeButton;
     [SerializeField] private List<Button> slotButtons;
     [SerializeField] private List<TextMeshProUGUI> slotTexts;
     [SerializeField] private TextMeshProUGUI titleText;
     [SerializeField] private TextMeshProUGUI notificationText;
 
+    public bool IsVisible => canvasGroup.alpha > 0;
+    private CanvasGroup canvasGroup;
     private bool isSaveMode;
     private GameManager gameManager; // Only needed for saving
+
+    private void Awake()
+    {
+        canvasGroup = GetComponent<CanvasGroup>();
+    }
 
     private void Start()
     {
@@ -50,12 +57,17 @@ public class SaveLoadUI : MonoBehaviour
 
         notificationText.text = "";
         RefreshUI();
-        mainPanel.SetActive(true);
+
+        canvasGroup.alpha = 1f;
+        canvasGroup.interactable = true;
+        canvasGroup.blocksRaycasts = true;
     }
 
     public void Hide()
     {
-        mainPanel.SetActive(false);
+        canvasGroup.alpha = 0f;
+        canvasGroup.interactable = false;
+        canvasGroup.blocksRaycasts = false;
     }
 
     private void RefreshUI()
