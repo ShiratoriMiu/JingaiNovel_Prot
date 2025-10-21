@@ -25,7 +25,14 @@ public class GameManager : MonoBehaviour
         if (!isChoiceMade) return;
         if (Input.GetMouseButtonDown(0))
         {
-            GoToNextLine();
+            if (uiController.IsTyping)
+            {
+                uiController.SkipTyping();
+            }
+            else
+            {
+                GoToNextLine();
+            }
         }
     }
 
