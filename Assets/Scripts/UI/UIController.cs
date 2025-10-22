@@ -95,15 +95,16 @@ public class UIController : MonoBehaviour
 
     public void ShowCharacter(Sprite sprite)
     {
+        if (characterImage == null) return;
+
         if (sprite != null)
         {
             characterImage.sprite = sprite;
-            characterImage.color = Color.white;
+            characterImage.enabled = true; // Imageコンポーネントを有効化
         }
         else
         {
-            // Hide character if sprite is null
-            characterImage.color = new Color(1, 1, 1, 0);
+            characterImage.enabled = false; // Imageコンポーネントを無効化
         }
     }
 
