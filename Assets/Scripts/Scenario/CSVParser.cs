@@ -7,19 +7,14 @@ public static class CSVParser
     public static List<ScenarioData> Parse(TextAsset csvFile)
     {
         var scenarioDataList = new List<ScenarioData>();
-        // Windows (\r\n) と Mac/Linux (\n) の両方の改行コードに対応
         var lines = csvFile.text.Split(new[] { "\r\n", "\n" }, System.StringSplitOptions.None);
 
         foreach (var line in lines)
         {
-            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#"))
-            {
-                continue;
-            }
+            if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) continue;
 
             var values = SplitCsvLine(line.Trim());
 
-            // 列が不足している場合に備えて、インデックスの範囲をチェック
             var data = new ScenarioData
             {
                 CharacterID = values.Count > 0 ? values[0] : string.Empty,
@@ -32,23 +27,33 @@ public static class CSVParser
 
             if (values.Count > 4 && !string.IsNullOrEmpty(values[4]))
             {
-                 // EventType と EventValue を解析 (例: "jump:scenario_02.csv")
-                var eventParts = values[4].Split(':');
-                data.EventType = eventParts[0];
-                if (eventParts.Length > 1)
+                string rawEvent = values[4];
+                int colonIndex = rawEvent.IndexOf(':');
+                if (colonIndex != -1)
                 {
-                    data.EventValue = eventParts[1];
+                    data.EventType = rawEvent.Substring(0, colonIndex);
+                    data.EventValue = rawEvent.Substring(colonIndex + 1);
                 }
                 else
                 {
+                    data.EventType = rawEvent;
                     data.EventValue = string.Empty;
                 }
-            } else {
-                // EventType がない場合はデフォルトで "dialogue" を設定
-                data.EventType = "dialogue";
+            }
+            else
+            {
+                // EventTypeがない場合は、CharacterIDを見てdialogueかoptionかを推測する
+                if(data.CharacterID == "option" || data.CharacterID == "timeout")
+                {
+                    // option と timeout は EventType を持たない想定
+                    data.EventType = data.CharacterID;
+                }
+                else
+                {
+                     data.EventType = "dialogue";
+                }
                 data.EventValue = string.Empty;
             }
-
 
             scenarioDataList.Add(data);
         }
@@ -65,17 +70,14 @@ public static class CSVParser
         for (int i = 0; i < line.Length; i++)
         {
             char c = line[i];
-
             if (inQuotes)
             {
-                // クォート内の処理
                 if (c == '"')
                 {
-                    // 次の文字がクォートであれば、それはエスケープされたクォートとして扱う
                     if (i + 1 < line.Length && line[i + 1] == '"')
                     {
                         currentField.Append('"');
-                        i++; // 次のクォートをスキップ
+                        i++;
                     }
                     else
                     {
@@ -89,7 +91,6 @@ public static class CSVParser
             }
             else
             {
-                // クォート外の処理
                 if (c == '"')
                 {
                     inQuotes = true;
@@ -105,9 +106,7 @@ public static class CSVParser
                 }
             }
         }
-
-        values.Add(currentField.ToString()); // 最後のフィールドを追加
-
+        values.Add(currentField.ToString());
         return values;
     }
 }
