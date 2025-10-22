@@ -22,9 +22,12 @@ public class GameManager : MonoBehaviour
     private SaveLoadUI saveLoadUIInstance;
     private InGameMenuUI inGameMenuUIInstance;
 
+    // --- Affection System State ---
+    private Dictionary<string, int> characterAffections = new Dictionary<string, int>();
+
+
     void Start()
     {
-        // Instantiate managers and UI if they don't exist
         if (SaveLoadManager.Instance == null)
         {
             GameObject managerObj = new GameObject("SaveLoadManager");
@@ -36,17 +39,16 @@ public class GameManager : MonoBehaviour
         CreateSaveButton();
         CreateMenuButton();
 
-        // Check if we should load a game or start a new one
         if (SaveLoadManager.Instance.DataToLoad != null)
         {
             ApplyGameData(SaveLoadManager.Instance.DataToLoad);
         }
         else
         {
+            characterAffections.Clear(); // New game starts with 0 affection
             LoadScenario(startingScenarioName, 0);
         }
 
-        // Subscribe to the UI click event
         if (uiController != null)
         {
             uiController.OnDialoguePanelClicked += HandleDialogueClick;
@@ -55,7 +57,6 @@ public class GameManager : MonoBehaviour
 
     private void OnDestroy()
     {
-        // Unsubscribe to prevent memory leaks
         if (uiController != null)
         {
             uiController.OnDialoguePanelClicked -= HandleDialogueClick;
@@ -64,7 +65,6 @@ public class GameManager : MonoBehaviour
 
     private void HandleDialogueClick()
     {
-        // Do not process clicks if any UI is active or if it's choice time
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying || !isChoiceMade) return;
@@ -114,9 +114,23 @@ public class GameManager : MonoBehaviour
 
     private void ShowLine()
     {
+        // Stop processing if we're past the end of the scenario
+        if (currentLine >= scenario.Count)
+        {
+            isScenarioPlaying = false;
+            Debug.Log("End of scenario reached.");
+            return;
+        }
+
         ScenarioData data = scenario[currentLine];
 
-        // Update current game state
+        // Check for branch conditions before processing the line
+        if (!CheckBranchCondition(data.BranchCondition))
+        {
+            GoToNextLine(); // Skip this line and move to the next
+            return;
+        }
+
         currentGameState.scenarioName = currentScenarioName;
         currentGameState.currentLineIndex = currentLine;
         currentGameState.characterID = data.CharacterID;
@@ -130,7 +144,13 @@ public class GameManager : MonoBehaviour
         {
             case "dialogue": HandleDialogue(data); break;
             case "choice": HandleChoice(data); break;
-            default: Debug.LogWarning($"Unknown event type: {data.EventType}"); break;
+            // Note: "option" is handled by HandleChoice, not here.
+            default:
+                if (data.CharacterID != "option")
+                {
+                     Debug.LogWarning($"Unknown event type: {data.EventType} on line {currentLine}");
+                }
+                break;
         }
     }
 
@@ -139,9 +159,8 @@ public class GameManager : MonoBehaviour
         CharacterData character = characterDatabase.GetCharacterData(data.CharacterID);
         string characterName = (character != null) ? character.characterName : data.CharacterID;
 
-        Sprite expressionSprite = null; // デフォルトは null (非表示)
+        Sprite expressionSprite = null;
 
-        // Expression が "none" や空欄でない場合のみ、スプライトを探す
         if (data.Expression != "none" && !string.IsNullOrEmpty(data.Expression))
         {
             if (character != null)
@@ -160,79 +179,168 @@ public class GameManager : MonoBehaviour
         }
     }
 
+    private void HandleChoice(ScenarioData data)
+    {
+        isChoiceMade = false;
+        uiController.ShowCharacter(null);
+        uiController.ShowDialogue("System", data.Dialogue, null);
+        var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.CharacterID == "option").ToList();
+        currentLine += choices.Count;
+        uiController.ShowChoices(choices, OnChoiceSelected);
+    }
+
+    private void OnChoiceSelected(ScenarioData choiceData)
+    {
+        isChoiceMade = true;
+        uiController.HideChoices();
+
+        // Apply affection changes from the chosen option
+        ApplyAffectionChange(choiceData.AffectionChange);
+
+        // Jump to the next scenario
+        string jumpTarget = choiceData.EventValue;
+        if (jumpTarget.ToLower() == "quit")
+        {
+            Debug.Log("Quitting game.");
+            // Application.Quit(); // Uncomment for build
+        }
+        else
+        {
+            LoadScenario(jumpTarget.Replace(".csv", ""), 0);
+        }
+    }
+
+    // --- Affection System Methods ---
+
+    private void ApplyAffectionChange(string affectionString)
+    {
+        if (string.IsNullOrEmpty(affectionString))
+        {
+            return;
+        }
+
+        // Multiple changes can be comma-separated, e.g., "charA:+10,charB:-5"
+        var changes = affectionString.Split(',');
+        foreach (var change in changes)
+        {
+            var parts = change.Split(':');
+            if (parts.Length != 2)
+            {
+                Debug.LogWarning($"Invalid affection change format: '{change}'");
+                continue;
+            }
+
+            string characterID = parts[0];
+            if (!int.TryParse(parts[1], out int valueChange))
+            {
+                Debug.LogWarning($"Invalid value in affection change: '{change}'");
+                continue;
+            }
+
+            int currentAffection = GetAffection(characterID);
+            characterAffections[characterID] = currentAffection + valueChange;
+            Debug.Log($"Affection for {characterID} changed to {characterAffections[characterID]}");
+        }
+    }
+
+    private int GetAffection(string characterID)
+    {
+        characterAffections.TryGetValue(characterID, out int value);
+        return value;
+    }
+
+    private bool CheckBranchCondition(string conditionString)
+    {
+        if (string.IsNullOrEmpty(conditionString))
+        {
+            return true; // No condition always passes
+        }
+
+        var parts = conditionString.Split(':');
+        if (parts.Length != 3)
+        {
+            Debug.LogWarning($"Invalid branch condition format: '{conditionString}'");
+            return true; // Treat invalid formats as true to prevent game from stopping
+        }
+
+        string characterID = parts[0];
+        string op = parts[1];
+        if (!int.TryParse(parts[2], out int requiredValue))
+        {
+            Debug.LogWarning($"Invalid value in branch condition: '{conditionString}'");
+            return true;
+        }
+
+        int currentAffection = GetAffection(characterID);
+
+        switch (op)
+        {
+            case "==": return currentAffection == requiredValue;
+            case "!=": return currentAffection != requiredValue;
+            case ">": return currentAffection > requiredValue;
+            case ">=": return currentAffection >= requiredValue;
+            case "<": return currentAffection < requiredValue;
+            case "<=": return currentAffection <= requiredValue;
+            default:
+                Debug.LogWarning($"Unsupported operator in branch condition: '{op}'");
+                return true;
+        }
+    }
+
     // --- Save & Load Specific Methods ---
 
     public GameData GetCurrentGameData()
     {
+        // Make sure to copy the dictionary so the save data is a snapshot
+        currentGameState.characterAffections = new Dictionary<string, int>(this.characterAffections);
         return currentGameState;
     }
 
     private void ApplyGameData(GameData data)
     {
         currentGameState = data;
+        // Restore the affection dictionary
+        this.characterAffections = new Dictionary<string, int>(data.characterAffections);
 
-        // Restore background
         if (!string.IsNullOrEmpty(data.backgroundImageName))
         {
             var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.backgroundImageName.Replace(".png", "")}");
             uiController.ChangeBackground(bgTexture);
         }
 
-        // Restore character
         CharacterData character = characterDatabase.GetCharacterData(data.characterID);
         Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.expression)?.sprite : null;
         uiController.ShowCharacter(expressionSprite);
 
-        // Load the scenario at the correct line
         LoadScenario(data.scenarioName, data.currentLineIndex);
     }
 
+    #region UI Instantiation (Boilerplate)
     private void InstantiateSaveLoadUI()
     {
         var prefab = Resources.Load<GameObject>("Prefabs/SaveLoadUI");
-        if (prefab == null)
-        {
-            Debug.LogError("SaveLoadUI prefab not found in Resources/Prefabs folder.");
-            return;
-        }
-
+        if (prefab == null) { Debug.LogError("SaveLoadUI prefab not found."); return; }
         Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogError("GameManager: No Canvas found in the scene to instantiate the SaveLoadUI.");
-            return;
-        }
-
+        if (canvas == null) { Debug.LogError("No Canvas found in scene."); return; }
         GameObject uiObj = Instantiate(prefab, canvas.transform);
         saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
     }
 
     private void CreateSaveButton()
     {
-        // Find the main canvas in the scene to add the button to
         Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogError("No Canvas found in the scene to add the save button.");
-            return;
-        }
-
+        if (canvas == null) return;
         GameObject buttonObj = new GameObject("SaveButton");
         buttonObj.transform.SetParent(canvas.transform, false);
-
-        UnityEngine.UI.Image image = buttonObj.AddComponent<UnityEngine.UI.Image>();
-        image.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-
+        buttonObj.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
         UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
         button.onClick.AddListener(() => saveLoadUIInstance.Show(true));
-
         RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(1, 1);
         rectTransform.anchorMax = new Vector2(1, 1);
         rectTransform.pivot = new Vector2(1, 1);
         rectTransform.anchoredPosition = new Vector2(-20, -20);
         rectTransform.sizeDelta = new Vector2(120, 50);
-
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(buttonObj.transform, false);
         TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
@@ -244,19 +352,9 @@ public class GameManager : MonoBehaviour
     private void InstantiateInGameMenuUI()
     {
         var prefab = Resources.Load<GameObject>("Prefabs/InGameMenuUI");
-        if (prefab == null)
-        {
-            Debug.LogError("InGameMenuUI prefab not found in Resources/Prefabs folder.");
-            return;
-        }
-
+        if (prefab == null) { Debug.LogError("InGameMenuUI prefab not found."); return; }
         Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas == null)
-        {
-            Debug.LogError("GameManager: No Canvas found in the scene to instantiate the InGameMenuUI.");
-            return;
-        }
-
+        if (canvas == null) return;
         GameObject uiObj = Instantiate(prefab, canvas.transform);
         inGameMenuUIInstance = uiObj.GetComponent<InGameMenuUI>();
     }
@@ -264,23 +362,18 @@ public class GameManager : MonoBehaviour
     private void CreateMenuButton()
     {
         Canvas canvas = FindObjectOfType<Canvas>();
-        if (canvas == null) { /* Error logged in other method */ return; }
-
+        if (canvas == null) return;
         GameObject buttonObj = new GameObject("MenuButton");
         buttonObj.transform.SetParent(canvas.transform, false);
-
         buttonObj.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
-
         UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
         button.onClick.AddListener(() => inGameMenuUIInstance.Show());
-
         RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
         rectTransform.anchorMin = new Vector2(0, 1);
         rectTransform.anchorMax = new Vector2(0, 1);
         rectTransform.pivot = new Vector2(0, 1);
         rectTransform.anchoredPosition = new Vector2(20, -20);
         rectTransform.sizeDelta = new Vector2(120, 50);
-
         GameObject textObj = new GameObject("Text");
         textObj.transform.SetParent(buttonObj.transform, false);
         TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
@@ -288,28 +381,5 @@ public class GameManager : MonoBehaviour
         text.color = Color.white;
         text.alignment = TMPro.TextAlignmentOptions.Center;
     }
-
-    private void HandleChoice(ScenarioData data)
-    {
-        isChoiceMade = false;
-        uiController.ShowCharacter(null); // 選択肢の際はキャラクターを非表示にする
-        uiController.ShowDialogue("System", data.Dialogue, null);
-        var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.CharacterID == "option").ToList();
-        currentLine += choices.Count;
-        uiController.ShowChoices(choices, OnChoiceSelected);
-    }
-
-    private void OnChoiceSelected(string jumpTarget)
-    {
-        isChoiceMade = true;
-        uiController.HideChoices();
-        if (jumpTarget.ToLower() == "quit")
-        {
-            Debug.Log("Quitting game.");
-        }
-        else
-        {
-            LoadScenario(jumpTarget.Replace(".csv", ""), 0);
-        }
-    }
+    #endregion
 }

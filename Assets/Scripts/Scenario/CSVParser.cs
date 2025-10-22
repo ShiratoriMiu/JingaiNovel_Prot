@@ -26,9 +26,11 @@ public static class CSVParser
                 Expression = values.Count > 1 ? values[1] : string.Empty,
                 Dialogue = values.Count > 2 ? values[2].Replace("\\\"", "\"") : string.Empty,
                 BackgroundImage = values.Count > 3 ? values[3] : string.Empty,
+                AffectionChange = values.Count > 5 ? values[5] : string.Empty,
+                BranchCondition = values.Count > 6 ? values[6] : string.Empty,
             };
 
-            if (values.Count > 4)
+            if (values.Count > 4 && !string.IsNullOrEmpty(values[4]))
             {
                  // EventType と EventValue を解析 (例: "jump:scenario_02.csv")
                 var eventParts = values[4].Split(':');
