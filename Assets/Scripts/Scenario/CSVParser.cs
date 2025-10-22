@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using System.Text.RegularExpressions;
+using System.Text;
 using UnityEngine;
 
 public static class CSVParser
@@ -7,7 +7,8 @@ public static class CSVParser
     public static List<ScenarioData> Parse(TextAsset csvFile)
     {
         var scenarioDataList = new List<ScenarioData>();
-        var lines = csvFile.text.Split('\n');
+        // Windows (\r\n) と Mac/Linux (\n) の両方の改行コードに対応
+        var lines = csvFile.text.Split(new[] { "\r\n", "\n" }, System.StringSplitOptions.None);
 
         foreach (var line in lines)
         {
@@ -18,25 +19,34 @@ public static class CSVParser
 
             var values = SplitCsvLine(line.Trim());
 
-            if (values.Count < 5) continue;
-
+            // 列が不足している場合に備えて、インデックスの範囲をチェック
             var data = new ScenarioData
             {
-                CharacterID = values[0],
-                Expression = values[1],
-                Dialogue = values[2].Replace("\\\"", "\""), // Unescape quotes
-                BackgroundImage = values[3],
+                CharacterID = values.Count > 0 ? values[0] : string.Empty,
+                Expression = values.Count > 1 ? values[1] : string.Empty,
+                Dialogue = values.Count > 2 ? values[2].Replace("\\\"", "\"") : string.Empty,
+                BackgroundImage = values.Count > 3 ? values[3] : string.Empty,
             };
 
-            // Parse EventType and EventValue (e.g., "jump:scenario_02.csv")
-            var eventParts = values[4].Split(':');
-            data.EventType = eventParts[0];
-            if (eventParts.Length > 1)
+            if (values.Count > 4)
             {
-                data.EventValue = eventParts[1];
+                 // EventType と EventValue を解析 (例: "jump:scenario_02.csv")
+                var eventParts = values[4].Split(':');
+                data.EventType = eventParts[0];
+                if (eventParts.Length > 1)
+                {
+                    data.EventValue = eventParts[1];
+                }
+                else
+                {
+                    data.EventValue = string.Empty;
+                }
             } else {
+                // EventType がない場合はデフォルトで "dialogue" を設定
+                data.EventType = "dialogue";
                 data.EventValue = string.Empty;
             }
+
 
             scenarioDataList.Add(data);
         }
@@ -46,21 +56,56 @@ public static class CSVParser
 
     private static List<string> SplitCsvLine(string line)
     {
-        // This is a simple parser. For more complex CSVs, a library might be better.
-        // It handles comma-separated values, including those quoted.
         var values = new List<string>();
-        var regex = new Regex("(\\\"(?:\\\\\"|.)*?\\\")|([^,]+)");
-        var matches = regex.Matches(line);
+        var currentField = new StringBuilder();
+        bool inQuotes = false;
 
-        foreach (Match match in matches)
+        for (int i = 0; i < line.Length; i++)
         {
-            var value = match.Value.Trim();
-            if (value.StartsWith("\"") && value.EndsWith("\""))
+            char c = line[i];
+
+            if (inQuotes)
             {
-                value = value.Substring(1, value.Length - 2);
+                // クォート内の処理
+                if (c == '"')
+                {
+                    // 次の文字がクォートであれば、それはエスケープされたクォートとして扱う
+                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    {
+                        currentField.Append('"');
+                        i++; // 次のクォートをスキップ
+                    }
+                    else
+                    {
+                        inQuotes = false;
+                    }
+                }
+                else
+                {
+                    currentField.Append(c);
+                }
             }
-            values.Add(value);
+            else
+            {
+                // クォート外の処理
+                if (c == '"')
+                {
+                    inQuotes = true;
+                }
+                else if (c == ',')
+                {
+                    values.Add(currentField.ToString());
+                    currentField.Clear();
+                }
+                else
+                {
+                    currentField.Append(c);
+                }
+            }
         }
+
+        values.Add(currentField.ToString()); // 最後のフィールドを追加
+
         return values;
     }
 }

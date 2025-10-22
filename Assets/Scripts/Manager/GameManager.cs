@@ -138,7 +138,17 @@ public class GameManager : MonoBehaviour
     {
         CharacterData character = characterDatabase.GetCharacterData(data.CharacterID);
         string characterName = (character != null) ? character.characterName : data.CharacterID;
-        Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.Expression)?.sprite : null;
+
+        Sprite expressionSprite = null; // デフォルトは null (非表示)
+
+        // Expression が "none" や空欄でない場合のみ、スプライトを探す
+        if (data.Expression != "none" && !string.IsNullOrEmpty(data.Expression))
+        {
+            if (character != null)
+            {
+                expressionSprite = character.expressions.Find(e => e.name == data.Expression)?.sprite;
+            }
+        }
 
         uiController.ShowDialogue(characterName, data.Dialogue, character);
         uiController.ShowCharacter(expressionSprite);
