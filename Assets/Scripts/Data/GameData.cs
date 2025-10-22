@@ -1,8 +1,9 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine; // Required for ISerializationCallbackReceiver
 
-[System.Serializable]
-public class GameData
+[Serializable]
+public class GameData : ISerializationCallbackReceiver
 {
     public string scenarioName;
     public int currentLineIndex;
@@ -11,10 +12,45 @@ public class GameData
     public string backgroundImageName;
     public string saveTimestamp;
 
+    // The dictionary is used for easy access during gameplay, but won't be serialized directly.
+    [NonSerialized]
+    public Dictionary<string, int> characterAffections = new Dictionary<string, int>();
+
+    // These two lists will be serialized by JsonUtility, acting as a surrogate for the dictionary.
+    [SerializeField] private List<string> affectionKeys = new List<string>();
+    [SerializeField] private List<int> affectionValues = new List<int>();
+
+    // Called by Unity before serialization
+    public void OnBeforeSerialize()
+    {
+        affectionKeys.Clear();
+        affectionValues.Clear();
+
+        foreach (var pair in characterAffections)
+        {
+            affectionKeys.Add(pair.Key);
+            affectionValues.Add(pair.Value);
+        }
+    }
+
+    // Called by Unity after deserialization
+    public void OnAfterDeserialize()
+    {
+        characterAffections = new Dictionary<string, int>();
+
+        for (int i = 0; i < affectionKeys.Count; i++)
+        {
+            // Check for count mismatch to prevent errors
+            if (i < affectionValues.Count) {
+                characterAffections[affectionKeys[i]] = affectionValues[i];
+            }
+        }
+    }
+
     // Default constructor for a new game state
     public GameData()
     {
-        scenarioName = ""; // Let GameManager fill this in
+        scenarioName = "";
         currentLineIndex = 0;
         characterID = "";
         expression = "";
@@ -22,7 +58,4 @@ public class GameData
         saveTimestamp = "";
         characterAffections = new Dictionary<string, int>();
     }
-
-    // Key: CharacterID, Value: Affection Score
-    public Dictionary<string, int> characterAffections;
 }
