@@ -292,6 +292,7 @@ public class GameManager : MonoBehaviour
     private void HandleChoice(ScenarioData data)
     {
         isChoiceMade = false;
+        uiController.ShowCharacter(null); // 選択肢の際はキャラクターを非表示にする
         uiController.ShowDialogue("System", data.Dialogue, null);
         var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.CharacterID == "option").ToList();
         currentLine += choices.Count;
