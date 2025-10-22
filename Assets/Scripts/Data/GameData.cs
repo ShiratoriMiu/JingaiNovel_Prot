@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 
 [System.Serializable]
 public class GameData
@@ -19,5 +20,9 @@ public class GameData
         expression = "";
         backgroundImageName = "";
         saveTimestamp = "";
+        characterAffections = new Dictionary<string, int>();
     }
+
+    // Key: CharacterID, Value: Affection Score
+    public Dictionary<string, int> characterAffections;
 }

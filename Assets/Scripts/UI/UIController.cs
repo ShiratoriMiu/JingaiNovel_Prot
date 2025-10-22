@@ -116,7 +116,7 @@ public class UIController : MonoBehaviour
         }
     }
 
-    public void ShowChoices(List<ScenarioData> choices, Action<string> onChoiceSelected)
+    public void ShowChoices(List<ScenarioData> choices, Action<ScenarioData> onChoiceSelected)
     {
         choiceButtonsContainer.SetActive(true);
 
@@ -137,8 +137,8 @@ public class UIController : MonoBehaviour
             newButton.GetComponentInChildren<TextMeshProUGUI>().text = choice.Dialogue;
             newButton.gameObject.SetActive(true);
 
-            // Pass the jump target (e.g., "scenario_02.csv") to the callback
-            newButton.onClick.AddListener(() => onChoiceSelected(choice.EventValue));
+            // Pass the entire ScenarioData object for the choice to the callback
+            newButton.onClick.AddListener(() => onChoiceSelected(choice));
         }
 
         // Hide the template
