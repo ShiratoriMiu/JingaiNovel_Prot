@@ -1,0 +1,6 @@
+# CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition
+# これはコメント行です。#で始まる行は無視されます。
+charA,normal,"Hello",background_school_day.png,dialogue
+charB,normal,"Scenario_02",background_school_day.png,dialogue
+system,,"",,jump:scenario_A_special,,charA:>=:10
+system,,"",,jump:scenario_A_normal
