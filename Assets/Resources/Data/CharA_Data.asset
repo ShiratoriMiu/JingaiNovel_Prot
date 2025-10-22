@@ -13,4 +13,6 @@ MonoBehaviour:
   m_Name: CharA_Data
   m_EditorClassIdentifier: 
   characterName: "\u30B5\u30F3\u30D7\u30EBA"
-  expressions: []
+  expressions:
+  - name: normal
+    sprite: {fileID: 2023774155561785231, guid: 9c817edafd0d40d4882b77962477fd7e, type: 3}

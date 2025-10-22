@@ -269,7 +269,7 @@ GameObject:
   - component: {fileID: 129845293}
   - component: {fileID: 129845292}
   m_Layer: 0
-  m_Name: "\u8A2D\u5B9A Button"
+  m_Name: SettingButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -479,7 +479,7 @@ GameObject:
   - component: {fileID: 207760046}
   - component: {fileID: 207760045}
   m_Layer: 0
-  m_Name: "\u7D42\u4E86 Button"
+  m_Name: FinishButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1029,7 +1029,7 @@ GameObject:
   - component: {fileID: 1196102597}
   - component: {fileID: 1196102596}
   m_Layer: 0
-  m_Name: "\u306F\u3058\u3081\u304B\u3089 Button"
+  m_Name: StartButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1421,7 +1421,7 @@ GameObject:
   - component: {fileID: 1373995473}
   - component: {fileID: 1373995472}
   m_Layer: 0
-  m_Name: "\u3064\u3065\u304D\u304B\u3089 Button"
+  m_Name: ReStartButton
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

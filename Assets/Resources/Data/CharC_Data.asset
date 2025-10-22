@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0321e2db582c6a1409f168a9221df916, type: 3}
-  m_Name: CharB_Data
+  m_Name: CharC_Data
   m_EditorClassIdentifier: 
-  characterName: "\u30B5\u30F3\u30D7\u30EBB"
+  characterName: "\u30B5\u30F3\u30D7\u30EBC"
   expressions:
   - name: normal
-    sprite: {fileID: 1568496728926452932, guid: 6a1809f0e6af6e84c879a1dbc1322525, type: 3}
+    sprite: {fileID: 6365428132965548234, guid: 36b3118a5187d12429e647d13023a3e4, type: 3}
