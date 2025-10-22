@@ -142,13 +142,20 @@ public class GameManager : MonoBehaviour
 
         switch (data.EventType)
         {
-            case "dialogue": HandleDialogue(data); break;
-            case "choice": HandleChoice(data); break;
+            case "dialogue":
+                HandleDialogue(data);
+                break;
+            case "choice":
+                HandleChoice(data);
+                return; // Stop further processing after initiating a choice
+            case "jump":
+                HandleJump(data);
+                return; // Stop further processing after a jump
             // Note: "option" is handled by HandleChoice, not here.
             default:
-                if (data.CharacterID != "option")
+                if (data.CharacterID != "option" && !string.IsNullOrEmpty(data.EventType))
                 {
-                     Debug.LogWarning($"Unknown event type: {data.EventType} on line {currentLine}");
+                     Debug.LogWarning($"Unknown event type: '{data.EventType}' on line {currentLine}");
                 }
                 break;
         }
@@ -187,6 +194,12 @@ public class GameManager : MonoBehaviour
         var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.CharacterID == "option").ToList();
         currentLine += choices.Count;
         uiController.ShowChoices(choices, OnChoiceSelected);
+    }
+
+    private void HandleJump(ScenarioData data)
+    {
+        Debug.Log($"Jumping to scenario: {data.EventValue}");
+        LoadScenario(data.EventValue.Replace(".csv", ""), 0);
     }
 
     private void OnChoiceSelected(ScenarioData choiceData)
@@ -230,8 +243,8 @@ public class GameManager : MonoBehaviour
                 continue;
             }
 
-            string characterID = parts[0];
-            if (!int.TryParse(parts[1], out int valueChange))
+            string characterID = parts[0].Trim(); // Trim whitespace
+            if (!int.TryParse(parts[1].Trim(), out int valueChange)) // Trim whitespace
             {
                 Debug.LogWarning($"Invalid value in affection change: '{change}'");
                 continue;
@@ -263,9 +276,9 @@ public class GameManager : MonoBehaviour
             return true; // Treat invalid formats as true to prevent game from stopping
         }
 
-        string characterID = parts[0];
-        string op = parts[1];
-        if (!int.TryParse(parts[2], out int requiredValue))
+        string characterID = parts[0].Trim(); // Trim whitespace
+        string op = parts[1].Trim(); // Trim whitespace
+        if (!int.TryParse(parts[2].Trim(), out int requiredValue)) // Trim whitespace
         {
             Debug.LogWarning($"Invalid value in branch condition: '{conditionString}'");
             return true;
