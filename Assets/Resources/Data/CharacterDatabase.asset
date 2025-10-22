@@ -13,11 +13,11 @@ MonoBehaviour:
   m_Name: CharacterDatabase
   m_EditorClassIdentifier: 
   characters:
-  - characterId: charA
+  - characterId: Haru
     characterData: {fileID: 11400000, guid: 0ee004b95a3019a4f90f205a7e80b3ee, type: 2}
-  - characterId: charB
+  - characterId: Asebi
     characterData: {fileID: 11400000, guid: cc4d1fe1e84e1374eb77186a0fae1e64, type: 2}
   - characterId: system
     characterData: {fileID: 11400000, guid: 84845a4bc933e60498a4d15f47462520, type: 2}
-  - characterId: charC
+  - characterId: Kyomu
     characterData: {fileID: 11400000, guid: 9ac177fad4e04c14facf04f9120d39e7, type: 2}

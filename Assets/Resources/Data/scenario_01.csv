@@ -1,8 +1,8 @@
 # CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition
 # これはコメント行です。#で始まる行は無視されます。
-charA,normal,"こんにちは！<color=red>Unity</color>の世界へようこそ！",background_school_day.png,dialogue
-charB,normal,"ここは、このゲームのメインとなる会話シーンです。",background_school_day.png,dialogue
-charC,normal,"あいうえお、かきくけこ",background_school_day.png,dialogue
+Haru,normal,"こんにちは！<color=red>Unity</color>の世界へようこそ！",background_school_day.png,dialogue
+Asebi,normal,"ここは、このゲームのメインとなる会話シーンです。",background_school_day.png,dialogue
+Kyomu,normal,"あいうえお、かきくけこ",background_school_day.png,dialogue
 system,none,"ここで、シナリオを分岐させることができます。",background_school_day.png,choice
 option,none,"選択肢 A: あいさつ",,jump:scenario_02.csv,charA:50
 option,none,"選択肢 B: こうげき",,jump:scenario_03
