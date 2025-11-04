@@ -23,6 +23,8 @@ public static class CSVParser
                 BackgroundImage = values.Count > 3 ? values[3] : string.Empty,
                 AffectionChange = values.Count > 5 ? values[5] : string.Empty,
                 BranchCondition = values.Count > 6 ? values[6] : string.Empty,
+                AnimationDuring = values.Count > 7 ? values[7] : string.Empty,
+                AnimationAfter = values.Count > 8 ? values[8] : string.Empty,
             };
 
             if (values.Count > 4 && !string.IsNullOrEmpty(values[4]))

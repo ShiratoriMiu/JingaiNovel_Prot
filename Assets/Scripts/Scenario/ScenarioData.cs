@@ -13,4 +13,10 @@ public class ScenarioData
     public string AffectionChange;
     // e.g., "charA:>=:50"
     public string BranchCondition;
+
+    // --- New fields for Animation System ---
+    // e.g., "Camera:Shake"
+    public string AnimationDuring;
+    // e.g., "charA:Blink,HideUI"
+    public string AnimationAfter;
 }
