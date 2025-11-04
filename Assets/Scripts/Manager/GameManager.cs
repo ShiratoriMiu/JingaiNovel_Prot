@@ -313,9 +313,70 @@ public class GameManager : MonoBehaviour
     #endregion
 
     #region UI Instantiation
-    private void InstantiateSaveLoadUI(){/*...boilerplate...*/}
-    private void CreateSaveButton(){/*...boilerplate...*/}
-    private void InstantiateInGameMenuUI(){/*...boilerplate...*/}
-    private void CreateMenuButton(){/*...boilerplate...*/}
+    private void InstantiateSaveLoadUI()
+    {
+        var prefab = Resources.Load<GameObject>("Prefabs/SaveLoadUI");
+        if (prefab == null) { Debug.LogError("SaveLoadUI prefab not found."); return; }
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) { Debug.LogError("No Canvas found in scene."); return; }
+        GameObject uiObj = Instantiate(prefab, canvas.transform);
+        saveLoadUIInstance = uiObj.GetComponent<SaveLoadUI>();
+    }
+
+    private void CreateSaveButton()
+    {
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+        GameObject buttonObj = new GameObject("SaveButton");
+        buttonObj.transform.SetParent(canvas.transform, false);
+        buttonObj.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+        UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
+        button.onClick.AddListener(() => saveLoadUIInstance.Show(true));
+        RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(1, 1);
+        rectTransform.anchorMax = new Vector2(1, 1);
+        rectTransform.pivot = new Vector2(1, 1);
+        rectTransform.anchoredPosition = new Vector2(-20, -20);
+        rectTransform.sizeDelta = new Vector2(120, 50);
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform, false);
+        TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = "Save";
+        text.color = Color.white;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+    }
+
+    private void InstantiateInGameMenuUI()
+    {
+        var prefab = Resources.Load<GameObject>("Prefabs/InGameMenuUI");
+        if (prefab == null) { Debug.LogError("InGameMenuUI prefab not found."); return; }
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+        GameObject uiObj = Instantiate(prefab, canvas.transform);
+        inGameMenuUIInstance = uiObj.GetComponent<InGameMenuUI>();
+    }
+
+    private void CreateMenuButton()
+    {
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null) return;
+        GameObject buttonObj = new GameObject("MenuButton");
+        buttonObj.transform.SetParent(canvas.transform, false);
+        buttonObj.AddComponent<UnityEngine.UI.Image>().color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+        UnityEngine.UI.Button button = buttonObj.AddComponent<UnityEngine.UI.Button>();
+        button.onClick.AddListener(() => inGameMenuUIInstance.Show());
+        RectTransform rectTransform = buttonObj.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0, 1);
+        rectTransform.anchorMax = new Vector2(0, 1);
+        rectTransform.pivot = new Vector2(0, 1);
+        rectTransform.anchoredPosition = new Vector2(20, -20);
+        rectTransform.sizeDelta = new Vector2(120, 50);
+        GameObject textObj = new GameObject("Text");
+        textObj.transform.SetParent(buttonObj.transform, false);
+        TMPro.TextMeshProUGUI text = textObj.AddComponent<TMPro.TextMeshProUGUI>();
+        text.text = "Menu";
+        text.color = Color.white;
+        text.alignment = TMPro.TextAlignmentOptions.Center;
+    }
     #endregion
 }
