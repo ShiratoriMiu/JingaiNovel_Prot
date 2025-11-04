@@ -28,6 +28,9 @@ public class GameManager : MonoBehaviour
     // --- Timed Choice State ---
     private bool isTimerActive = false;
 
+    // --- Animation State ---
+    private bool isBlockingAnimationPlaying = false;
+
 
     void Start()
     {
@@ -71,7 +74,7 @@ public class GameManager : MonoBehaviour
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying || !isChoiceMade) return;
-        if (isTimerActive) return; // Don't advance dialogue if timer is running
+        if (isTimerActive || isBlockingAnimationPlaying) return; // Block input during animations or timers
 
         if (uiController.IsTyping)
         {
@@ -128,6 +131,9 @@ public class GameManager : MonoBehaviour
             return;
         }
 
+        // Play "during" animations
+        uiController.PlayAnimations(data.AnimationDuring);
+
         currentGameState.scenarioName = currentScenarioName;
         currentGameState.currentLineIndex = currentLine;
         currentGameState.characterID = data.CharacterID;
@@ -147,6 +153,12 @@ public class GameManager : MonoBehaviour
                 {
                      Debug.LogWarning($"Unknown event type: '{data.EventType}' on line {currentLine}");
                 }
+                // If the line has no dialogue, it might be purely for an "AnimationAfter" event.
+                // Trigger the finish event immediately to process it.
+                else if (string.IsNullOrEmpty(data.Dialogue))
+                {
+                    OnDialogueLineFinished();
+                }
                 break;
         }
     }
@@ -160,13 +172,32 @@ public class GameManager : MonoBehaviour
         {
             expressionSprite = character.expressions.Find(e => e.name == data.Expression)?.sprite;
         }
-        uiController.ShowDialogue(characterName, data.Dialogue, character);
+
+        uiController.ShowDialogue(characterName, data.Dialogue, character, OnDialogueLineFinished);
+
         uiController.ShowCharacter(expressionSprite);
         if (!string.IsNullOrEmpty(data.BackgroundImage))
         {
             var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.BackgroundImage.Replace(".png", "")}");
             uiController.ChangeBackground(bgTexture);
         }
+    }
+
+    private void OnDialogueLineFinished()
+    {
+        // This is called when typing finishes or is skipped.
+        // We now check for an "AnimationAfter" event.
+        ScenarioData data = scenario[currentLine];
+
+        if (!string.IsNullOrEmpty(data.AnimationAfter))
+        {
+            isBlockingAnimationPlaying = true;
+            uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
+                isBlockingAnimationPlaying = false;
+                GoToNextLine();
+            });
+        }
+        // If there's no "after" animation, the game simply waits for the next player click to advance.
     }
 
     private void HandleChoice(ScenarioData data)

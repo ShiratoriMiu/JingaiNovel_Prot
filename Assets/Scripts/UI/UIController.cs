@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
-using System; // For Action
+using System;
 using System.Collections;
 using System.Text;
 
@@ -11,6 +11,7 @@ public class UIController : MonoBehaviour
     public event Action OnDialoguePanelClicked;
 
     [Header("UI Elements")]
+    [SerializeField] private GameObject dialogueBoxContainer;
     [SerializeField] private TextMeshProUGUI nameText;
     [SerializeField] private TextMeshProUGUI dialogueText;
     [SerializeField] private Button dialoguePanelButton;
@@ -19,8 +20,12 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject choiceButtonsContainer;
     [SerializeField] private Button choiceButtonTemplate;
 
+    [Header("Animators")]
+    [SerializeField] private Animator characterAnimator;
+    [SerializeField] private Animator cameraAnimator;
+
     [Header("Timed Choice Elements")]
-    [SerializeField] private Slider timerSlider; // タイマーバー用のSlider
+    [SerializeField] private Slider timerSlider;
 
     [Header("Typing Effect")]
     [SerializeField] private float charsPerSecond = 10f;
@@ -28,7 +33,9 @@ public class UIController : MonoBehaviour
 
     private Coroutine typingCoroutine;
     private Coroutine timerCoroutine;
+    private Coroutine blockingAnimationCoroutine;
     private string fullDialogueText;
+    private Action onTypingCompleted;
 
     private void Awake()
     {
@@ -38,10 +45,138 @@ public class UIController : MonoBehaviour
         }
         if (timerSlider != null)
         {
-            timerSlider.gameObject.SetActive(false); // 最初は非表示
+            timerSlider.gameObject.SetActive(false);
         }
     }
 
+    public void ShowDialogue(string characterName, string dialogue, CharacterData characterData, Action onTypingCompleted)
+    {
+        this.onTypingCompleted = onTypingCompleted;
+        SetDialogueBoxVisible(true);
+        nameText.text = characterName;
+        fullDialogueText = dialogue;
+
+        if (typingCoroutine != null) StopCoroutine(typingCoroutine);
+        typingCoroutine = StartCoroutine(TypeText(dialogue));
+    }
+
+    public void SkipTyping()
+    {
+        if (IsTyping)
+        {
+            StopCoroutine(typingCoroutine);
+            dialogueText.text = fullDialogueText;
+            IsTyping = false;
+            typingCoroutine = null;
+            onTypingCompleted?.Invoke();
+            onTypingCompleted = null;
+        }
+    }
+
+    private IEnumerator TypeText(string text)
+    {
+        IsTyping = true;
+        dialogueText.text = "";
+        StringBuilder stringBuilder = new StringBuilder();
+        bool isTag = false;
+
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            if (c == '<') isTag = true;
+            stringBuilder.Append(c);
+            if (c == '>') isTag = false;
+            dialogueText.text = stringBuilder.ToString();
+            if (!isTag && c != ' ')
+            {
+                yield return new WaitForSeconds(1f / charsPerSecond);
+            }
+        }
+
+        IsTyping = false;
+        typingCoroutine = null;
+        onTypingCompleted?.Invoke();
+        onTypingCompleted = null;
+    }
+
+    #region Animation
+    public void PlayAnimations(string animationCommands)
+    {
+        if (string.IsNullOrEmpty(animationCommands)) return;
+
+        var commands = animationCommands.Split(',');
+        foreach (var command in commands)
+        {
+            if (string.IsNullOrEmpty(command) || command.Trim().Equals("HideUI", StringComparison.OrdinalIgnoreCase)) continue;
+
+            var parts = command.Split(':');
+            if (parts.Length != 2) continue;
+
+            string target = parts[0].Trim();
+            string trigger = parts[1].Trim();
+
+            if (target.Equals("Camera", StringComparison.OrdinalIgnoreCase))
+            {
+                if (cameraAnimator != null) cameraAnimator.SetTrigger(trigger);
+            }
+            else
+            {
+                if (characterAnimator != null) characterAnimator.SetTrigger(trigger);
+            }
+        }
+    }
+
+    public void PlayBlockingAnimation(string animationCommands, Action onComplete)
+    {
+        if (blockingAnimationCoroutine != null) StopCoroutine(blockingAnimationCoroutine);
+        blockingAnimationCoroutine = StartCoroutine(BlockingAnimationCoroutine(animationCommands, onComplete));
+    }
+
+    private IEnumerator BlockingAnimationCoroutine(string animationCommands, Action onComplete)
+    {
+        bool hideUI = animationCommands.Contains("HideUI");
+        if (hideUI) SetDialogueBoxVisible(false);
+
+        PlayAnimations(animationCommands);
+
+        yield return null; // Wait one frame for animator state to update
+
+        float waitTime = 0f;
+        if (cameraAnimator != null && cameraAnimator.runtimeAnimatorController != null)
+        {
+             waitTime = Mathf.Max(waitTime, GetCurrentAnimatorClipLength(cameraAnimator));
+        }
+        if (characterAnimator != null && characterAnimator.runtimeAnimatorController != null)
+        {
+             waitTime = Mathf.Max(waitTime, GetCurrentAnimatorClipLength(characterAnimator));
+        }
+
+        if(waitTime <= 0) waitTime = 1f; // Default wait time
+
+        yield return new WaitForSeconds(waitTime);
+
+        if (hideUI) SetDialogueBoxVisible(true);
+
+        onComplete?.Invoke();
+        blockingAnimationCoroutine = null;
+    }
+
+    private float GetCurrentAnimatorClipLength(Animator animator)
+    {
+        var stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        return stateInfo.length;
+    }
+
+    public void SetDialogueBoxVisible(bool isVisible)
+    {
+        if (dialogueBoxContainer != null)
+        {
+            dialogueBoxContainer.SetActive(isVisible);
+        }
+    }
+    #endregion
+
+    #region Timed Choices
     public void StartTimer(float duration, Action onTimeout)
     {
         if (timerSlider == null)
@@ -79,7 +214,7 @@ public class UIController : MonoBehaviour
         while (timer > 0)
         {
             timer -= Time.deltaTime;
-            timerSlider.value = timer / duration; // 0から1の範囲で値を設定
+            timerSlider.value = timer / duration;
             yield return null;
         }
 
@@ -87,53 +222,7 @@ public class UIController : MonoBehaviour
         onTimeout?.Invoke();
         timerCoroutine = null;
     }
-
-    public void ShowDialogue(string characterName, string dialogue, CharacterData characterData)
-    {
-        nameText.text = characterName;
-        fullDialogueText = dialogue;
-
-        if (typingCoroutine != null)
-        {
-            StopCoroutine(typingCoroutine);
-        }
-        typingCoroutine = StartCoroutine(TypeText(dialogue));
-    }
-
-    public void SkipTyping()
-    {
-        if (IsTyping)
-        {
-            StopCoroutine(typingCoroutine);
-            dialogueText.text = fullDialogueText;
-            IsTyping = false;
-            typingCoroutine = null;
-        }
-    }
-
-    private IEnumerator TypeText(string text)
-    {
-        IsTyping = true;
-        dialogueText.text = "";
-        StringBuilder stringBuilder = new StringBuilder();
-        bool isTag = false;
-
-        for (int i = 0; i < text.Length; i++)
-        {
-            char c = text[i];
-            if (c == '<') isTag = true;
-            stringBuilder.Append(c);
-            if (c == '>') isTag = false;
-            dialogueText.text = stringBuilder.ToString();
-            if (!isTag && c != ' ')
-            {
-                yield return new WaitForSeconds(1f / charsPerSecond);
-            }
-        }
-
-        IsTyping = false;
-        typingCoroutine = null;
-    }
+    #endregion
 
     public void ShowCharacter(Sprite sprite)
     {
@@ -160,14 +249,12 @@ public class UIController : MonoBehaviour
     public void ShowChoices(List<ScenarioData> choices, Action<ScenarioData> onChoiceSelected)
     {
         choiceButtonsContainer.SetActive(true);
-        // Clear previous buttons
         for (int i = choiceButtonsContainer.transform.childCount - 1; i >= 0; i--)
         {
             GameObject child = choiceButtonsContainer.transform.GetChild(i).gameObject;
             if (child != choiceButtonTemplate.gameObject) Destroy(child);
         }
 
-        // Create a button for each choice
         foreach (var choice in choices)
         {
             Button newButton = Instantiate(choiceButtonTemplate, choiceButtonsContainer.transform);
@@ -180,14 +267,11 @@ public class UIController : MonoBehaviour
 
     public void HideChoices()
     {
-        // Disable all buttons to prevent clicking after a choice is made or timed out
         foreach (var button in choiceButtonsContainer.GetComponentsInChildren<Button>())
         {
             button.interactable = false;
         }
         choiceButtonsContainer.SetActive(false);
-
-        // Re-enable template for next time
         choiceButtonTemplate.interactable = true;
     }
 }
