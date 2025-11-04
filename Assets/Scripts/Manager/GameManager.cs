@@ -204,7 +204,8 @@ public class GameManager : MonoBehaviour
     {
         isChoiceMade = false;
         uiController.ShowCharacter(null);
-        uiController.ShowDialogue("System", data.Dialogue, null);
+        // Pass null for the Action, as we don't need a callback here.
+        uiController.ShowDialogue("System", data.Dialogue, null, null);
 
         var choices = scenario.Skip(currentLine + 1).TakeWhile(d => d.CharacterID == "option").ToList();
 
