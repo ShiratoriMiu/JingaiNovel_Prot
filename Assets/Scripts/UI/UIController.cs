@@ -34,8 +34,11 @@ public class UIController : MonoBehaviour
     private Coroutine typingCoroutine;
     private Coroutine timerCoroutine;
     private Coroutine blockingAnimationCoroutine;
+    private Coroutine duringAnimationCoroutine;
     private string fullDialogueText;
     private Action onTypingCompleted;
+
+    public bool IsDuringAnimationPlaying { get; private set; }
 
     private void Awake()
     {
@@ -47,9 +50,10 @@ public class UIController : MonoBehaviour
         {
             timerSlider.gameObject.SetActive(false);
         }
+        IsDuringAnimationPlaying = false;
     }
 
-    public void ShowDialogue(string characterName, string dialogue, CharacterData characterData, Action onTypingCompleted)
+    public void ShowDialogue(string characterName, string dialogue, CharacterData characterData, string animationDuringCommands, Action onTypingCompleted)
     {
         this.onTypingCompleted = onTypingCompleted;
         SetDialogueBoxVisible(true);
@@ -58,6 +62,12 @@ public class UIController : MonoBehaviour
 
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(dialogue));
+
+        if (duringAnimationCoroutine != null) StopCoroutine(duringAnimationCoroutine);
+        if (!string.IsNullOrEmpty(animationDuringCommands))
+        {
+            duringAnimationCoroutine = StartCoroutine(DuringAnimationCoroutine(animationDuringCommands));
+        }
     }
 
     public void SkipTyping()
@@ -139,19 +149,11 @@ public class UIController : MonoBehaviour
 
         PlayAnimations(animationCommands);
 
-        yield return null; // Wait one frame for animator state to update
+        yield return null;
 
-        float waitTime = 0f;
-        if (cameraAnimator != null && cameraAnimator.runtimeAnimatorController != null)
-        {
-             waitTime = Mathf.Max(waitTime, GetCurrentAnimatorClipLength(cameraAnimator));
-        }
-        if (characterAnimator != null && characterAnimator.runtimeAnimatorController != null)
-        {
-             waitTime = Mathf.Max(waitTime, GetCurrentAnimatorClipLength(characterAnimator));
-        }
+        float waitTime = GetMaxAnimationLength();
 
-        if(waitTime <= 0) waitTime = 1f; // Default wait time
+        if(waitTime <= 0) waitTime = 1f;
 
         yield return new WaitForSeconds(waitTime);
 
@@ -159,6 +161,38 @@ public class UIController : MonoBehaviour
 
         onComplete?.Invoke();
         blockingAnimationCoroutine = null;
+    }
+
+    private IEnumerator DuringAnimationCoroutine(string animationCommands)
+    {
+        IsDuringAnimationPlaying = true;
+        PlayAnimations(animationCommands);
+
+        yield return null;
+
+        float waitTime = GetMaxAnimationLength();
+
+        if (waitTime > 0)
+        {
+            yield return new WaitForSeconds(waitTime);
+        }
+
+        IsDuringAnimationPlaying = false;
+        duringAnimationCoroutine = null;
+    }
+
+    private float GetMaxAnimationLength()
+    {
+        float maxTime = 0f;
+        if (cameraAnimator != null && cameraAnimator.runtimeAnimatorController != null)
+        {
+            maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(cameraAnimator));
+        }
+        if (characterAnimator != null && characterAnimator.runtimeAnimatorController != null)
+        {
+            maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(characterAnimator));
+        }
+        return maxTime;
     }
 
     private float GetCurrentAnimatorClipLength(Animator animator)
