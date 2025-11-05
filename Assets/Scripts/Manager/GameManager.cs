@@ -80,7 +80,7 @@ public class GameManager : MonoBehaviour
         {
             uiController.SkipTyping();
         }
-        else
+        else if(!uiController.IsDuringAnimationPlaying)
         {
             GoToNextLine();
         }
@@ -173,7 +173,7 @@ public class GameManager : MonoBehaviour
             expressionSprite = character.expressions.Find(e => e.name == data.Expression)?.sprite;
         }
 
-        uiController.ShowDialogue(characterName, data.Dialogue, character, OnDialogueLineFinished);
+        uiController.ShowDialogue(characterName, data.Dialogue, character, data.AnimationDuring, OnDialogueLineFinished);
 
         uiController.ShowCharacter(expressionSprite);
         if (!string.IsNullOrEmpty(data.BackgroundImage))
