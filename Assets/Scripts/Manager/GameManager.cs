@@ -75,14 +75,17 @@ public class GameManager : MonoBehaviour
     {
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
-        if (!isScenarioPlaying || !isChoiceMade) return;
-        if (isTimerActive || isBlockingAnimationPlaying || isTransitioning) return;
+        if (!isScenarioPlaying) return;
 
         if (uiController.IsTyping)
         {
             uiController.SkipTyping();
+            return;
         }
-        else if (pendingAfterAnimation)
+
+        if (!isChoiceMade || isTimerActive || isBlockingAnimationPlaying || isTransitioning) return;
+
+        if (pendingAfterAnimation)
         {
             pendingAfterAnimation = false;
             PlayAfterAnimation();
