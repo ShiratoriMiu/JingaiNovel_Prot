@@ -30,6 +30,7 @@ public class GameManager : MonoBehaviour
 
     // --- Animation State ---
     private bool isBlockingAnimationPlaying = false;
+    private bool isTransitioning = false;
 
 
     void Start()
@@ -74,7 +75,7 @@ public class GameManager : MonoBehaviour
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying || !isChoiceMade) return;
-        if (isTimerActive || isBlockingAnimationPlaying) return; // Block input during animations or timers
+        if (isTimerActive || isBlockingAnimationPlaying || isTransitioning) return;
 
         if (uiController.IsTyping)
         {
@@ -102,6 +103,9 @@ public class GameManager : MonoBehaviour
 
     public void GoToNextLine()
     {
+        if (isTransitioning) return;
+        isTransitioning = true;
+
         if (currentLine < scenario.Count - 1)
         {
             currentLine++;
@@ -110,6 +114,7 @@ public class GameManager : MonoBehaviour
         else
         {
             isScenarioPlaying = false;
+            isTransitioning = false;
             Debug.Log("End of scenario.");
         }
     }
@@ -181,6 +186,7 @@ public class GameManager : MonoBehaviour
             var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.BackgroundImage.Replace(".png", "")}");
             uiController.ChangeBackground(bgTexture);
         }
+        isTransitioning = false;
     }
 
     private void OnDialogueLineFinished()
@@ -217,6 +223,7 @@ public class GameManager : MonoBehaviour
             isTimerActive = true;
             uiController.StartTimer(duration, OnChoiceTimeout);
         }
+        isTransitioning = false;
     }
 
     private void OnChoiceTimeout()
