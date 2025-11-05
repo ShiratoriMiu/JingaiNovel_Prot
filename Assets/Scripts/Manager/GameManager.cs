@@ -31,6 +31,7 @@ public class GameManager : MonoBehaviour
     // --- Animation State ---
     private bool isBlockingAnimationPlaying = false;
     private bool isTransitioning = false;
+    private bool pendingAfterAnimation = false;
 
 
     void Start()
@@ -80,6 +81,11 @@ public class GameManager : MonoBehaviour
         if (uiController.IsTyping)
         {
             uiController.SkipTyping();
+        }
+        else if (pendingAfterAnimation)
+        {
+            pendingAfterAnimation = false;
+            PlayAfterAnimation();
         }
         else if(!uiController.IsDuringAnimationPlaying)
         {
@@ -197,13 +203,26 @@ public class GameManager : MonoBehaviour
 
         if (!string.IsNullOrEmpty(data.AnimationAfter))
         {
-            isBlockingAnimationPlaying = true;
-            uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
-                isBlockingAnimationPlaying = false;
-                GoToNextLine();
-            });
+            pendingAfterAnimation = true;
         }
         // If there's no "after" animation, the game simply waits for the next player click to advance.
+    }
+
+    private void PlayAfterAnimation()
+    {
+        ScenarioData data = scenario[currentLine];
+        if (string.IsNullOrEmpty(data.AnimationAfter)) return;
+
+        bool autoProceed = data.AnimationAfter.Contains("HideUI");
+
+        isBlockingAnimationPlaying = true;
+        uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
+            isBlockingAnimationPlaying = false;
+            if (autoProceed)
+            {
+                GoToNextLine();
+            }
+        });
     }
 
     private void HandleChoice(ScenarioData data)
