@@ -117,9 +117,10 @@ public class UIController : MonoBehaviour
     }
 
     #region Animation
-    public void PlayAnimations(string animationCommands)
+    public List<Animator> PlayAnimations(string animationCommands)
     {
-        if (string.IsNullOrEmpty(animationCommands)) return;
+        var triggeredAnimators = new List<Animator>();
+        if (string.IsNullOrEmpty(animationCommands)) return triggeredAnimators;
 
         var commands = animationCommands.Split(',');
         foreach (var command in commands)
@@ -136,12 +137,14 @@ public class UIController : MonoBehaviour
             if (target != null && target.animator != null)
             {
                 target.animator.SetTrigger(trigger);
+                triggeredAnimators.Add(target.animator);
             }
             else
             {
                 Debug.LogWarning($"Animation target '{targetName}' not found or animator is null.");
             }
         }
+        return triggeredAnimators;
     }
 
     public void PlayBlockingAnimation(string animationCommands, Action onComplete)
@@ -157,15 +160,18 @@ public class UIController : MonoBehaviour
 
         if (hideUI) SetDialogueBoxVisible(false);
 
-        PlayAnimations(animationCommands);
+        var triggeredAnimators = PlayAnimations(animationCommands);
 
-        yield return null;
+        yield return null; // Wait one frame for animator states to update
 
-        float waitTime = GetMaxAnimationLength();
+        float waitTime = GetMaxAnimationLength(triggeredAnimators);
 
-        if(waitTime <= 0) waitTime = 1f;
+        if (waitTime <= 0 && triggeredAnimators.Any()) waitTime = 1f; // Default wait time if length is 0
 
-        yield return new WaitForSeconds(waitTime);
+        if (waitTime > 0)
+        {
+            yield return new WaitForSeconds(waitTime);
+        }
 
         if (hideUI) SetDialogueBoxVisible(true);
 
@@ -176,11 +182,11 @@ public class UIController : MonoBehaviour
     private IEnumerator DuringAnimationCoroutine(string animationCommands)
     {
         IsDuringAnimationPlaying = true;
-        PlayAnimations(animationCommands);
+        var triggeredAnimators = PlayAnimations(animationCommands);
 
-        yield return null;
+        yield return null; // Wait one frame for animator states to update
 
-        float waitTime = GetMaxAnimationLength();
+        float waitTime = GetMaxAnimationLength(triggeredAnimators);
 
         if (waitTime > 0)
         {
@@ -191,14 +197,14 @@ public class UIController : MonoBehaviour
         duringAnimationCoroutine = null;
     }
 
-    private float GetMaxAnimationLength()
+    private float GetMaxAnimationLength(List<Animator> animators)
     {
         float maxTime = 0f;
-        foreach (var target in animationTargets)
+        foreach (var animator in animators)
         {
-            if (target.animator != null && target.animator.runtimeAnimatorController != null)
+            if (animator != null && animator.runtimeAnimatorController != null)
             {
-                maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(target.animator));
+                maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(animator));
             }
         }
         return maxTime;
@@ -206,8 +212,8 @@ public class UIController : MonoBehaviour
 
     private float GetCurrentAnimatorClipLength(Animator animator)
     {
-        var stateInfo = animator.GetCurrentAnimatorStateInfo(0);
-        return stateInfo.length;
+        // This now correctly gets the length of the newly transitioned state
+        return animator.GetCurrentAnimatorStateInfo(0).length;
     }
 
     public void SetDialogueBoxVisible(bool isVisible)
