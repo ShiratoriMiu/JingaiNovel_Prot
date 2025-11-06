@@ -151,7 +151,9 @@ public class UIController : MonoBehaviour
 
     private IEnumerator BlockingAnimationCoroutine(string animationCommands, Action onComplete)
     {
-        bool hideUI = animationCommands.Contains("HideUI");
+        var commands = animationCommands.Split(',').Select(cmd => cmd.Trim()).ToList();
+        bool hideUI = commands.Contains("HideUI");
+
         if (hideUI) SetDialogueBoxVisible(false);
 
         PlayAnimations(animationCommands);

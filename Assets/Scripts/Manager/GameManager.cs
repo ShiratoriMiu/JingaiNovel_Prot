@@ -218,7 +218,7 @@ public class GameManager : MonoBehaviour
 
         bool autoProceed = data.AnimationAfter.Contains("HideUI");
 
-        isBlockingAnimationPlaying = true;
+        isBlockingAnimationPlaying = true; // Set flag immediately before calling
         uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
             isBlockingAnimationPlaying = false;
             if (autoProceed)
