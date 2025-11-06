@@ -212,8 +212,14 @@ public class UIController : MonoBehaviour
 
     private float GetCurrentAnimatorClipLength(Animator animator)
     {
-        // This now correctly gets the length of the newly transitioned state
-        return animator.GetCurrentAnimatorStateInfo(0).length;
+        if (animator.IsInTransition(0))
+        {
+            return animator.GetNextAnimatorStateInfo(0).length;
+        }
+        else
+        {
+            return animator.GetCurrentAnimatorStateInfo(0).length;
+        }
     }
 
     public void SetDialogueBoxVisible(bool isVisible)
