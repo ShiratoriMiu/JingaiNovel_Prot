@@ -6,6 +6,13 @@ using System;
 using System.Collections;
 using System.Text;
 
+[Serializable]
+public class AnimationTarget
+{
+    public string name;
+    public Animator animator;
+}
+
 public class UIController : MonoBehaviour
 {
     public event Action OnDialoguePanelClicked;
@@ -20,9 +27,8 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject choiceButtonsContainer;
     [SerializeField] private Button choiceButtonTemplate;
 
-    [Header("Animators")]
-    [SerializeField] private Animator characterAnimator;
-    [SerializeField] private Animator cameraAnimator;
+    [Header("Animation Settings")]
+    [SerializeField] private List<AnimationTarget> animationTargets = new List<AnimationTarget>();
 
     [Header("Timed Choice Elements")]
     [SerializeField] private Slider timerSlider;
@@ -122,16 +128,17 @@ public class UIController : MonoBehaviour
             var parts = command.Split(':');
             if (parts.Length != 2) continue;
 
-            string target = parts[0].Trim();
+            string targetName = parts[0].Trim();
             string trigger = parts[1].Trim();
 
-            if (target.Equals("Camera", StringComparison.OrdinalIgnoreCase))
+            AnimationTarget target = animationTargets.Find(t => t.name.Equals(targetName, StringComparison.OrdinalIgnoreCase));
+            if (target != null && target.animator != null)
             {
-                if (cameraAnimator != null) cameraAnimator.SetTrigger(trigger);
+                target.animator.SetTrigger(trigger);
             }
             else
             {
-                if (characterAnimator != null) characterAnimator.SetTrigger(trigger);
+                Debug.LogWarning($"Animation target '{targetName}' not found or animator is null.");
             }
         }
     }
@@ -184,13 +191,12 @@ public class UIController : MonoBehaviour
     private float GetMaxAnimationLength()
     {
         float maxTime = 0f;
-        if (cameraAnimator != null && cameraAnimator.runtimeAnimatorController != null)
+        foreach (var target in animationTargets)
         {
-            maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(cameraAnimator));
-        }
-        if (characterAnimator != null && characterAnimator.runtimeAnimatorController != null)
-        {
-            maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(characterAnimator));
+            if (target.animator != null && target.animator.runtimeAnimatorController != null)
+            {
+                maxTime = Mathf.Max(maxTime, GetCurrentAnimatorClipLength(target.animator));
+            }
         }
         return maxTime;
     }
