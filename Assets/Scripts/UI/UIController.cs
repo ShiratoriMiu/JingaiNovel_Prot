@@ -125,7 +125,7 @@ public class UIController : MonoBehaviour
         var commands = animationCommands.Split(',');
         foreach (var command in commands)
         {
-            if (string.IsNullOrEmpty(command) || command.Trim().Equals("HideUI", StringComparison.OrdinalIgnoreCase)) continue;
+            if (string.IsNullOrEmpty(command)) continue;
 
             var parts = command.Split(':');
             if (parts.Length != 2) continue;
@@ -155,11 +155,6 @@ public class UIController : MonoBehaviour
 
     private IEnumerator BlockingAnimationCoroutine(string animationCommands, Action onComplete)
     {
-        var commands = animationCommands.Split(',').Select(cmd => cmd.Trim()).ToList();
-        bool hideUI = commands.Contains("HideUI");
-
-        if (hideUI) SetDialogueBoxVisible(false);
-
         var triggeredAnimators = PlayAnimations(animationCommands);
 
         yield return null; // Wait one frame for animator states to update
@@ -172,8 +167,6 @@ public class UIController : MonoBehaviour
         {
             yield return new WaitForSeconds(waitTime);
         }
-
-        if (hideUI) SetDialogueBoxVisible(true);
 
         onComplete?.Invoke();
         blockingAnimationCoroutine = null;

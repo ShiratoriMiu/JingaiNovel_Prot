@@ -17,6 +17,6 @@ public class ScenarioData
     // --- New fields for Animation System ---
     // e.g., "Camera:Shake"
     public string AnimationDuring;
-    // e.g., "charA:Blink,HideUI"
+    // e.g., "charA:Blink,AutoProceed"
     public string AnimationAfter;
 }
