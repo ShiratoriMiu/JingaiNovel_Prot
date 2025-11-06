@@ -224,7 +224,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        bool autoProceed = data.AnimationAfter.Contains("HideUI");
+        bool autoProceed = data.AnimationAfter.Contains("AutoProceed");
 
         isBlockingAnimationPlaying = true;
         uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
