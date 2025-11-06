@@ -224,10 +224,12 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        bool autoProceed = data.AnimationAfter.Contains("AutoProceed");
+    var commandList = data.AnimationAfter.Split(',').Select(c => c.Trim()).ToList();
+    bool autoProceed = commandList.RemoveAll(c => c.Equals("AutoProceed", StringComparison.OrdinalIgnoreCase)) > 0;
+    string animationCommandsForUI = string.Join(",", commandList);
 
         isBlockingAnimationPlaying = true;
-        uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
+    uiController.PlayBlockingAnimation(animationCommandsForUI, () => {
             isBlockingAnimationPlaying = false;
             if (autoProceed)
             {
