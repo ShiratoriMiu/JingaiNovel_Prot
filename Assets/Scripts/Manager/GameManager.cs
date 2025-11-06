@@ -76,6 +76,7 @@ public class GameManager : MonoBehaviour
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying) return;
+        if (isTransitioning) return;
 
         if (uiController.IsTyping)
         {
@@ -83,14 +84,13 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-        if (!isChoiceMade || isTimerActive || isBlockingAnimationPlaying || isTransitioning) return;
+        if (!isChoiceMade || isTimerActive || isBlockingAnimationPlaying) return;
 
         if (pendingAfterAnimation)
         {
-            pendingAfterAnimation = false;
             PlayAfterAnimation();
         }
-        else if(!uiController.IsDuringAnimationPlaying)
+        else if (!uiController.IsDuringAnimationPlaying)
         {
             GoToNextLine();
         }
@@ -213,17 +213,29 @@ public class GameManager : MonoBehaviour
 
     private void PlayAfterAnimation()
     {
+        if (isTransitioning) return;
+        isTransitioning = true;
+        pendingAfterAnimation = false;
+
         ScenarioData data = scenario[currentLine];
-        if (string.IsNullOrEmpty(data.AnimationAfter)) return;
+        if (string.IsNullOrEmpty(data.AnimationAfter))
+        {
+            isTransitioning = false;
+            return;
+        }
 
         bool autoProceed = data.AnimationAfter.Contains("HideUI");
 
-        isBlockingAnimationPlaying = true; // Set flag immediately before calling
+        isBlockingAnimationPlaying = true;
         uiController.PlayBlockingAnimation(data.AnimationAfter, () => {
             isBlockingAnimationPlaying = false;
             if (autoProceed)
             {
                 GoToNextLine();
+            }
+            else
+            {
+                isTransitioning = false;
             }
         });
     }
