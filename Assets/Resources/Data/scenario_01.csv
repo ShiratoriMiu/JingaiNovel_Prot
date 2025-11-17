@@ -1,7 +1,7 @@
 # CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition,AnimationDuring,AnimationAfter
 # これはコメント行です。#で始まる行は無視されます。
-,,"遠くで​地響きが​している。​ 何か​起きているのか...？​",BG_SchoolNight,dialogue,,,MainImage:BlackOut,MainImage:OpenEye,HideUI
-,,"うっすらと​目を​開け、​周囲を​確認してみる。​ここは​...どこだ？​  ",,dialogue,,,,
+,,"遠くで​地響きが​している。​ 何か​起きているのか...？​",BG_SchoolNight,dialogue,,,MainImage:BlackOut,"UI:CloseTextWindow,MainImage:OpenEye,AutoProceed"
+,,"うっすらと​目を​開け、​周囲を​確認してみる。​ここは​...どこだ？​  ",,dialogue,,,UI:OpenTextWindow,
 ,,"見覚えの​ない​部屋。​自分以外​誰も​いないようだ。",,dialogue,,,,
 ,,"自分は​ソファに​横たわっているようだ。​ ...そも​そも、​何を​していたんだっけ。​",,dialogue,,,,
 ,,"体を​起こそうとした​とき、​カチャリと​音を​たてて​何かが​落ちた。​​",,dialogue,,,,
