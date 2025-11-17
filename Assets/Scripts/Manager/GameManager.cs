@@ -114,7 +114,6 @@ public class GameManager : MonoBehaviour
 
     public void GoToNextLine()
     {
-        if (isTransitioning) return;
         isTransitioning = true;
 
         if (currentLine < scenario.Count - 1)
