@@ -66,49 +66,87 @@ public static class CSVParser
     private static List<string> SplitCsvLine(string line)
     {
         var values = new List<string>();
-        var currentField = new StringBuilder();
+        if (string.IsNullOrEmpty(line)) return values;
+
+        int start = 0;
+        while (start < line.Length)
+        {
+            values.Add(ParseNextField(line, ref start));
+        }
+        return values;
+    }
+
+    private static string ParseNextField(string line, ref int start)
+    {
+        var field = new StringBuilder();
         bool inQuotes = false;
 
-        for (int i = 0; i < line.Length; i++)
+        // Skip leading whitespace
+        while (start < line.Length && char.IsWhiteSpace(line[start]))
         {
-            char c = line[i];
+            start++;
+        }
+
+        if (start < line.Length && line[start] == '"')
+        {
+            inQuotes = true;
+            start++; // Skip the opening quote
+        }
+
+        while (start < line.Length)
+        {
+            char c = line[start];
+
             if (inQuotes)
             {
                 if (c == '"')
                 {
-                    if (i + 1 < line.Length && line[i + 1] == '"')
+                    if (start + 1 < line.Length && line[start + 1] == '"')
                     {
-                        currentField.Append('"');
-                        i++;
+                        field.Append('"'); // Escaped quote
+                        start += 2;
+                        continue;
                     }
                     else
                     {
                         inQuotes = false;
+                        start++; // Skip the closing quote
+                        break; // End of field
                     }
                 }
                 else
                 {
-                    currentField.Append(c);
+                    field.Append(c);
+                    start++;
                 }
             }
             else
             {
-                if (c == '"')
+                if (c == ',')
                 {
-                    inQuotes = true;
-                }
-                else if (c == ',')
-                {
-                    values.Add(currentField.ToString());
-                    currentField.Clear();
+                    start++; // Skip the comma
+                    break; // End of field
                 }
                 else
                 {
-                    currentField.Append(c);
+                    field.Append(c);
+                    start++;
                 }
             }
         }
-        values.Add(currentField.ToString());
-        return values;
+
+        // Skip trailing whitespace until the next comma
+        while (start < line.Length && char.IsWhiteSpace(line[start]))
+        {
+            if (line[start] == ',') break;
+            start++;
+        }
+        if (start < line.Length && line[start] == ',')
+        {
+             start++; // Consume comma for the next field
+        }
+
+
+        return field.ToString();
     }
 }
