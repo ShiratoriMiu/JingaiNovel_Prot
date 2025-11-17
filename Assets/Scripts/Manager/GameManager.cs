@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using System.Linq;
 using System;
+using System.Text.RegularExpressions;
 
 public class GameManager : MonoBehaviour
 {
@@ -225,7 +226,7 @@ public class GameManager : MonoBehaviour
             return;
         }
 
-    var commandList = data.AnimationAfter.Split(',').Select(c => c.Trim()).ToList();
+    var commandList = data.AnimationAfter.Split(',').Select(c => Regex.Replace(c, @"\s+", "")).ToList();
     bool autoProceed = commandList.RemoveAll(c => c.Equals("AutoProceed", StringComparison.OrdinalIgnoreCase)) > 0;
     string animationCommandsForUI = string.Join(",", commandList);
 
