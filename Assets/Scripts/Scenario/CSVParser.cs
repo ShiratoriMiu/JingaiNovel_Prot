@@ -68,85 +68,87 @@ public static class CSVParser
         var values = new List<string>();
         if (string.IsNullOrEmpty(line)) return values;
 
-        int start = 0;
-        while (start < line.Length)
+        int pos = 0;
+        while (pos < line.Length)
         {
-            values.Add(ParseNextField(line, ref start));
-        }
-        return values;
-    }
+            var field = new StringBuilder();
+            bool inQuotes = false;
 
-    private static string ParseNextField(string line, ref int start)
-    {
-        var field = new StringBuilder();
-        bool inQuotes = false;
-
-        // Skip leading whitespace
-        while (start < line.Length && char.IsWhiteSpace(line[start]))
-        {
-            start++;
-        }
-
-        if (start < line.Length && line[start] == '"')
-        {
-            inQuotes = true;
-            start++; // Skip the opening quote
-        }
-
-        while (start < line.Length)
-        {
-            char c = line[start];
-
-            if (inQuotes)
+            // Skip leading whitespace of the field
+            while (pos < line.Length && char.IsWhiteSpace(line[pos]))
             {
-                if (c == '"')
+                pos++;
+            }
+
+            // Check for quoted field
+            if (pos < line.Length && line[pos] == '"')
+            {
+                inQuotes = true;
+                pos++; // consume quote
+            }
+
+            // Read field content
+            while (pos < line.Length)
+            {
+                if (inQuotes)
                 {
-                    if (start + 1 < line.Length && line[start + 1] == '"')
+                    if (line[pos] == '"')
                     {
-                        field.Append('"'); // Escaped quote
-                        start += 2;
-                        continue;
+                        if (pos + 1 < line.Length && line[pos + 1] == '"') // escaped quote
+                        {
+                            field.Append('"');
+                            pos += 2;
+                        }
+                        else // end of quoted field
+                        {
+                            inQuotes = false;
+                            pos++; // consume quote
+                            break;
+                        }
                     }
                     else
                     {
-                        inQuotes = false;
-                        start++; // Skip the closing quote
-                        break; // End of field
+                        field.Append(line[pos]);
+                        pos++;
                     }
                 }
-                else
+                else // not in quotes
                 {
-                    field.Append(c);
-                    start++;
+                    if (line[pos] == ',')
+                    {
+                        // end of unquoted field
+                        break;
+                    }
+                    else
+                    {
+                        field.Append(line[pos]);
+                        pos++;
+                    }
                 }
             }
-            else
+
+            // After the field content is read, find the next comma
+            while (pos < line.Length && line[pos] != ',')
             {
-                if (c == ',')
-                {
-                    start++; // Skip the comma
-                    break; // End of field
-                }
-                else
-                {
-                    field.Append(c);
-                    start++;
-                }
+                // Skip trailing characters (and whitespace) until a comma or end of line
+                pos++;
             }
+
+            // Move past the comma for the next iteration
+            if (pos < line.Length && line[pos] == ',')
+            {
+                pos++;
+            }
+
+            values.Add(field.ToString());
         }
 
-        // Skip trailing whitespace until the next comma
-        while (start < line.Length && char.IsWhiteSpace(line[start]))
+        // Add a final empty field if the line ends with a comma
+        if (line.EndsWith(","))
         {
-            if (line[start] == ',') break;
-            start++;
-        }
-        if (start < line.Length && line[start] == ',')
-        {
-             start++; // Consume comma for the next field
+            values.Add(string.Empty);
         }
 
-
-        return field.ToString();
+        return values;
     }
 }
