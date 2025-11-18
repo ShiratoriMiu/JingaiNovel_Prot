@@ -257,8 +257,7 @@ public class GameManager : MonoBehaviour
         // Timed choice logic
         if (float.TryParse(data.EventValue, out float duration))
         {
-            isTimerActive = true;
-            uiController.StartTimer(duration, OnChoiceTimeout);
+            isTimerActive = uiController.StartTimer(duration, OnChoiceTimeout);
         }
         isTransitioning = false;
     }
@@ -376,15 +375,21 @@ public class GameManager : MonoBehaviour
     {
         currentGameState = data;
         this.characterAffections = new Dictionary<string, int>(data.characterAffections);
+
+        // Load the scenario and line first, which might reset some UI elements
+        LoadScenario(data.scenarioName, data.currentLineIndex);
+
+        // Now, restore the state from the save file over the top of the loaded line state
         if (!string.IsNullOrEmpty(data.backgroundImageName))
         {
             var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.backgroundImageName.Replace(".png", "")}");
             uiController.ChangeBackground(bgTexture);
+            currentGameState.backgroundImageName = data.backgroundImageName; // Ensure game state is also correct
         }
+
         CharacterData character = characterDatabase.GetCharacterData(data.characterID);
         Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.expression)?.sprite : null;
         uiController.ShowCharacter(expressionSprite);
-        LoadScenario(data.scenarioName, data.currentLineIndex);
     }
     #endregion
 
