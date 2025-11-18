@@ -225,13 +225,11 @@ public class UIController : MonoBehaviour
     #endregion
 
     #region Timed Choices
-    public void StartTimer(float duration, Action onTimeout)
+    public bool StartTimer(float duration, Action onTimeout)
     {
         if (timerSlider == null)
         {
-            Debug.LogWarning("Timer Slider is not assigned in the UIController.");
-            onTimeout?.Invoke();
-            return;
+            CreateTimerSlider();
         }
 
         if (timerCoroutine != null)
@@ -239,6 +237,7 @@ public class UIController : MonoBehaviour
             StopCoroutine(timerCoroutine);
         }
         timerCoroutine = StartCoroutine(TimerCoroutine(duration, onTimeout));
+        return true;
     }
 
     public void StopTimer()
@@ -269,6 +268,65 @@ public class UIController : MonoBehaviour
         timerSlider.gameObject.SetActive(false);
         onTimeout?.Invoke();
         timerCoroutine = null;
+    }
+
+    private void CreateTimerSlider()
+    {
+        Canvas canvas = FindObjectOfType<Canvas>();
+        if (canvas == null)
+        {
+            Debug.LogError("No Canvas found in scene. Cannot create Timer Slider.");
+            return;
+        }
+
+        GameObject sliderObj = new GameObject("TimerSlider");
+        sliderObj.transform.SetParent(canvas.transform, false);
+        timerSlider = sliderObj.AddComponent<Slider>();
+
+        RectTransform rectTransform = sliderObj.GetComponent<RectTransform>();
+        rectTransform.anchorMin = new Vector2(0.5f, 1);
+        rectTransform.anchorMax = new Vector2(0.5f, 1);
+        rectTransform.pivot = new Vector2(0.5f, 1);
+        rectTransform.anchoredPosition = new Vector2(0, -20);
+        rectTransform.sizeDelta = new Vector2(canvas.GetComponent<RectTransform>().sizeDelta.x * 0.8f, 20);
+
+        // Background
+        GameObject backgroundObj = new GameObject("Background");
+        backgroundObj.transform.SetParent(sliderObj.transform, false);
+        Image bgImage = backgroundObj.AddComponent<Image>();
+        bgImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
+        StretchToParentSize(backgroundObj.GetComponent<RectTransform>());
+
+        // Fill Area
+        GameObject fillAreaObj = new GameObject("Fill Area");
+        fillAreaObj.transform.SetParent(sliderObj.transform, false);
+        StretchToParentSize(fillAreaObj.GetComponent<RectTransform>());
+
+        // Fill
+        GameObject fillObj = new GameObject("Fill");
+        fillObj.transform.SetParent(fillAreaObj.transform, false);
+        Image fillImage = fillObj.AddComponent<Image>();
+        fillImage.color = Color.yellow;
+
+        timerSlider.fillRect = fillObj.GetComponent<RectTransform>();
+        timerSlider.fillRect.anchorMin = new Vector2(0, 0);
+        timerSlider.fillRect.anchorMax = new Vector2(1, 1);
+        timerSlider.fillRect.pivot = new Vector2(0.5f, 0.5f);
+
+        timerSlider.minValue = 0;
+        timerSlider.maxValue = 1;
+        timerSlider.value = 1;
+        timerSlider.interactable = false;
+
+        timerSlider.gameObject.SetActive(false);
+    }
+
+    private void StretchToParentSize(RectTransform rectTransform)
+    {
+        rectTransform.anchorMin = Vector2.zero;
+        rectTransform.anchorMax = Vector2.one;
+        rectTransform.sizeDelta = Vector2.zero;
+        rectTransform.anchoredPosition = Vector2.zero;
     }
     #endregion
 
