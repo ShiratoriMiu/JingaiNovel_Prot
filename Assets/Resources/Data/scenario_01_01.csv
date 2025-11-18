@@ -5,4 +5,4 @@
 ,,"...特に​何の​音も​聞こえない。",,dialogue,,,,
 system,none,,,choice,,,,
 option,none,"部屋を出る",,jump:scenario_01_02.csv,,,,
-option,none,"部屋を調べる",,jump:scenario_02,,,
+option,none,"部屋を調べる",,jump:scenario_02.csv,,,

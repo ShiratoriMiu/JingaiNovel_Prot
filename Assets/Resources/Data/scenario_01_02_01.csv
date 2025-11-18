@@ -4,4 +4,4 @@
 ,,"他に​特に​気に​なる​ものは​ない。​",,dialogue,,,,
 system,none,"​",,choice,,,,
 option,none,"扉の向こうの様子を伺う",,jump:scenario_01_01.csv,,,,
-option,none,"部屋を出る",,jump:scenario_02,,,,
+option,none,"部屋を出る",,jump:scenario_02.csv,,,,

@@ -6,4 +6,4 @@
 ,,"足元を​見ると、​何かの​薬品の​空瓶の​ようだ。​",,dialogue,,,,
 system,none,"​",,choice,,,,
 option,none,"拾う",,jump:scenario_01_02_01.csv,,,,
-option,none,"拾わない",,jump:scenario_01_02_02,,,,
+option,none,"拾わない",,jump:scenario_01_02_02.csv,,,,

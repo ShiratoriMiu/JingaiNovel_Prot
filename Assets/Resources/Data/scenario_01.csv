@@ -13,5 +13,5 @@
 ,,"そう​いえば、​目が​覚めた​時も​同じような​地響きを​聞いたような​気が​する。​",,dialogue,,,,
 system,none,"何もしなければ​何も​解決しないと​いう​もの。​とりあえず、​何か​行動しよう。​",,choice,,,,
 option,none,"部屋を出る",,jump:scenario_02.csv,,,,
-option,none,"部屋を調べる",,jump:scenario_01_02,,,
-option,none,"扉の向こうの様子を伺う",,jump:scenario_01_01,,,
+option,none,"部屋を調べる",,jump:scenario_01_02.csv,,,
+option,none,"扉の向こうの様子を伺う",,jump:scenario_01_01.csv,,,
