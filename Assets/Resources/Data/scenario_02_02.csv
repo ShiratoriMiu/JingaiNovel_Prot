@@ -1,6 +1,6 @@
 # CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition,AnimationDuring,AnimationAfter
 # これはコメント行です。#で始まる行は無視されます。
-,,"部屋の​扉を​開ける。",,dialogue,,,,
+,,"scenario_02_02",,dialogue,,,,
 ,,"恐る​恐る​顔を​出して​周囲を​見渡すが、​特に​危険な​ものは​ないようだ。",,dialogue,,,,
 ,,"足元には​瓦礫が​散っている。​気を​付けて​進もう。",,dialogue,,,,
 ,,"進めそうな​場所は​あるか...と​周囲を​見渡していた​その​時だ。",,dialogue,,,,
@@ -10,6 +10,6 @@
 ,,"それは​ゆっくりと​こちらに​歩みを​進め、​やがて​その​姿が​明らかに​なる。",,dialogue,,,,
 ,,"フードから​見える​それは、​顔を​覆い​尽く​す触手の​束。",,dialogue,,,,
 ,,"腕が​4本生えており、​図体は​大きく、​片脚に​触手が​蠢き、もは​や原型が​ない。",,dialogue,,,,
-system,none,"己の​本能が​逃げろと​言っている​...！​",,choice:10,,,,
+system,none,"己の​本能が​逃げろと​言っている​...！​",,choice:3,,,,
 option,none,"逃げる",,jump:scenario_02_01.csv,,,,
 timeout,none,,,jump:scenario_02_02.csv,,,,

@@ -1,0 +1,8 @@
+# CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition,AnimationDuring,AnimationAfter
+# これはコメント行です。#で始まる行は無視されます。
+,,"先程地​響きや​大きな​音が​していた。​簡単に​扉を​開けるのは​怖い。​",,dialogue,,,,
+,,"部屋の​扉に​耳を​押し当て、​向こう側の​様子を​伺う。",,dialogue,,,,
+,,"...特に​何の​音も​聞こえない。",,dialogue,,,,
+system,none,,,choice,,,,
+option,none,"部屋を出る",,jump:scenario_01_02.csv,,,,
+option,none,"部屋を調べる",,jump:scenario_02,,,

@@ -1,0 +1,9 @@
+# CharacterID,Expression,Dialogue,BackgroundImage,EventType,AffectionChange,BranchCondition,AnimationDuring,AnimationAfter
+# これはコメント行です。#で始まる行は無視されます。
+,,"最初は​気付かなかったが、​よく​見ると​あちこちに​物が​散乱している。​",,dialogue,,,,
+,,"何者かに​荒らされたと​いう​よりは、​慌てて​逃げだしたような​印象だ。",,dialogue,,,,
+,,"部屋を​見回そうと​足を​進めた​時だ。​靴に​カランと​何かが​当たった​音が​した。",,dialogue,,,,
+,,"足元を​見ると、​何かの​薬品の​空瓶の​ようだ。​",,dialogue,,,,
+system,none,"​",,choice,,,,
+option,none,"拾う",,jump:scenario_01_02_01.csv,,,,
+option,none,"拾わない",,jump:scenario_01_02_02,,,,
