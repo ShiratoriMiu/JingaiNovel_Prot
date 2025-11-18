@@ -291,19 +291,19 @@ public class UIController : MonoBehaviour
         rectTransform.sizeDelta = new Vector2(canvas.GetComponent<RectTransform>().sizeDelta.x * 0.8f, 20);
 
         // Background
-        GameObject backgroundObj = new GameObject("Background");
+        GameObject backgroundObj = new GameObject("Background", typeof(RectTransform));
         backgroundObj.transform.SetParent(sliderObj.transform, false);
         Image bgImage = backgroundObj.AddComponent<Image>();
         bgImage.color = new Color(0.2f, 0.2f, 0.2f, 0.8f);
         StretchToParentSize(backgroundObj.GetComponent<RectTransform>());
 
         // Fill Area
-        GameObject fillAreaObj = new GameObject("Fill Area");
+        GameObject fillAreaObj = new GameObject("Fill Area", typeof(RectTransform));
         fillAreaObj.transform.SetParent(sliderObj.transform, false);
         StretchToParentSize(fillAreaObj.GetComponent<RectTransform>());
 
         // Fill
-        GameObject fillObj = new GameObject("Fill");
+        GameObject fillObj = new GameObject("Fill", typeof(RectTransform));
         fillObj.transform.SetParent(fillAreaObj.transform, false);
         Image fillImage = fillObj.AddComponent<Image>();
         fillImage.color = Color.yellow;
