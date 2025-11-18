@@ -191,10 +191,16 @@ public class GameManager : MonoBehaviour
         uiController.ShowDialogue(characterName, data.Dialogue, character, data.AnimationDuring, OnDialogueLineFinished);
 
         uiController.ShowCharacter(expressionSprite);
-        if (!string.IsNullOrEmpty(data.BackgroundImage))
+
+        string bgNameToLoad = !string.IsNullOrEmpty(data.BackgroundImage)
+            ? data.BackgroundImage
+            : currentGameState.backgroundImageName;
+
+        if (!string.IsNullOrEmpty(bgNameToLoad))
         {
-            var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.BackgroundImage.Replace(".png", "")}");
+            var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{bgNameToLoad.Replace(".png", "")}");
             uiController.ChangeBackground(bgTexture);
+            currentGameState.backgroundImageName = bgNameToLoad; // Ensure consistency
         }
         isTransitioning = false;
     }
@@ -373,23 +379,13 @@ public class GameManager : MonoBehaviour
 
     private void ApplyGameData(GameData data)
     {
+        // First, fully restore the game state from the saved data.
         currentGameState = data;
         this.characterAffections = new Dictionary<string, int>(data.characterAffections);
 
-        // Load the scenario and line first, which might reset some UI elements
+        // Now, load the scenario. ShowLine will be called inside, and it will
+        // use the restored currentGameState to render the correct background.
         LoadScenario(data.scenarioName, data.currentLineIndex);
-
-        // Now, restore the state from the save file over the top of the loaded line state
-        if (!string.IsNullOrEmpty(data.backgroundImageName))
-        {
-            var bgTexture = Resources.Load<Texture>($"Images/Backgrounds/{data.backgroundImageName.Replace(".png", "")}");
-            uiController.ChangeBackground(bgTexture);
-            currentGameState.backgroundImageName = data.backgroundImageName; // Ensure game state is also correct
-        }
-
-        CharacterData character = characterDatabase.GetCharacterData(data.characterID);
-        Sprite expressionSprite = (character != null) ? character.expressions.Find(e => e.name == data.expression)?.sprite : null;
-        uiController.ShowCharacter(expressionSprite);
     }
     #endregion
 
