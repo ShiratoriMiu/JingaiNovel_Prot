@@ -28,6 +28,17 @@ public class UIController : MonoBehaviour
     [SerializeField] private GameObject choiceButtonsContainer;
     [SerializeField] private Button choiceButtonTemplate;
 
+    [Header("Name Input UI")]
+    [SerializeField] private GameObject nameInputPanel;
+    [SerializeField] private TMP_InputField nameInputField;
+    [SerializeField] private Button nameInputSubmitButton;
+    [SerializeField] private GameObject nameConfirmPopup;
+    [SerializeField] private TextMeshProUGUI confirmNameText;
+    [SerializeField] private Button confirmAcceptButton;
+    [SerializeField] private Button confirmBackButton;
+    [SerializeField] private GameObject ngWordWarningPopup;
+    [SerializeField] private Button ngWordWarningOkButton;
+
     [Header("Animation Settings")]
     [SerializeField] private List<AnimationTarget> animationTargets = new List<AnimationTarget>();
 
@@ -44,6 +55,8 @@ public class UIController : MonoBehaviour
     private Coroutine duringAnimationCoroutine;
     private string fullDialogueText;
     private Action onTypingCompleted;
+    private Action<string> onNameConfirmed;
+    private List<string> ngWordList = new List<string>();
 
     public bool IsDuringAnimationPlaying { get; private set; }
 
@@ -53,6 +66,19 @@ public class UIController : MonoBehaviour
         {
             dialoguePanelButton.onClick.AddListener(() => OnDialoguePanelClicked?.Invoke());
         }
+
+        // Initialize Name Input UI
+        nameInputPanel?.SetActive(false);
+        nameConfirmPopup?.SetActive(false);
+        ngWordWarningPopup?.SetActive(false);
+
+        nameInputSubmitButton?.onClick.AddListener(OnNameInputSubmit);
+        confirmAcceptButton?.onClick.AddListener(OnConfirmAccept);
+        confirmBackButton?.onClick.AddListener(OnConfirmBack);
+        ngWordWarningOkButton?.onClick.AddListener(() => ngWordWarningPopup?.SetActive(false));
+
+        LoadNGWordList();
+
         if (timerSlider != null)
         {
             timerSlider.gameObject.SetActive(false);
@@ -380,4 +406,101 @@ public class UIController : MonoBehaviour
         choiceButtonsContainer.SetActive(false);
         choiceButtonTemplate.interactable = true;
     }
+
+    #region Name Input
+
+    private void LoadNGWordList()
+    {
+        TextAsset ngWordAsset = Resources.Load<TextAsset>("Data/NGWordList");
+        if (ngWordAsset != null)
+        {
+            string[] words = ngWordAsset.text.Split(new[] { '\n', '\r' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach(var word in words)
+            {
+                if(!string.IsNullOrWhiteSpace(word))
+                {
+                    ngWordList.Add(word.Trim());
+                }
+            }
+        }
+        else
+        {
+            Debug.LogWarning("NGWordList.csv not found in Resources/Data.");
+        }
+    }
+
+    public void ShowNameInput(Action<string> onNameConfirmedCallback)
+    {
+        this.onNameConfirmed = onNameConfirmedCallback;
+        nameInputField.text = "";
+        nameInputPanel?.SetActive(true);
+    }
+
+    private bool IsNameValid(string name, out string foundNGWord)
+    {
+        foundNGWord = null;
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return false;
+        }
+
+        if (name.Length > 10)
+        {
+            return false;
+        }
+
+        foreach (var ngWord in ngWordList)
+        {
+            if (name.Contains(ngWord))
+            {
+                foundNGWord = ngWord;
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private void OnNameInputSubmit()
+    {
+        string playerName = nameInputField.text;
+        string foundNGWord;
+
+        if (!IsNameValid(playerName, out foundNGWord))
+        {
+            if (foundNGWord != null)
+            {
+                // NG word was found
+                ngWordWarningPopup?.SetActive(true);
+                nameInputField.text = ""; // Clear the input as requested
+            }
+            else
+            {
+                // Name is empty or too long
+                // For now, we just log a warning. A dedicated popup could be implemented here.
+                Debug.LogWarning("Player name is invalid (empty or too long).");
+            }
+            return;
+        }
+
+        confirmNameText.text = playerName;
+        nameInputPanel?.SetActive(false);
+        nameConfirmPopup?.SetActive(true);
+    }
+
+    private void OnConfirmAccept()
+    {
+        string confirmedName = confirmNameText.text;
+        nameConfirmPopup?.SetActive(false);
+        onNameConfirmed?.Invoke(confirmedName);
+        onNameConfirmed = null;
+    }
+
+    private void OnConfirmBack()
+    {
+        nameConfirmPopup?.SetActive(false);
+        nameInputPanel?.SetActive(true);
+    }
+
+    #endregion
 }

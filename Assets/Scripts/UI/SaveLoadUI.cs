@@ -77,7 +77,7 @@ public class SaveLoadUI : MonoBehaviour
         {
             if (i < allData.Count && allData[i] != null)
             {
-                slotTexts[i].text = $"スロット {i + 1}\n{allData[i].saveTimestamp}";
+                slotTexts[i].text = $"主人公: {allData[i].playerName}\n{allData[i].saveTimestamp}";
                 if (!isSaveMode)
                 {
                     slotButtons[i].interactable = true;
@@ -85,7 +85,7 @@ public class SaveLoadUI : MonoBehaviour
             }
             else
             {
-                slotTexts[i].text = $"スロット {i + 1}\n(空きデータ)";
+                slotTexts[i].text = "データがありません";
                 if (!isSaveMode)
                 {
                     slotButtons[i].interactable = false;

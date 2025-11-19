@@ -34,6 +34,7 @@ public class GameManager : MonoBehaviour
     private bool isBlockingAnimationPlaying = false;
     private bool isTransitioning = false;
     private bool pendingAfterAnimation = false;
+    private bool isWaitingForNameInput = false;
 
 
     void Start()
@@ -78,7 +79,7 @@ public class GameManager : MonoBehaviour
         if (saveLoadUIInstance != null && saveLoadUIInstance.IsVisible) return;
         if (inGameMenuUIInstance != null && inGameMenuUIInstance.IsVisible) return;
         if (!isScenarioPlaying) return;
-        if (isTransitioning) return;
+        if (isTransitioning || isWaitingForNameInput) return;
 
         if (uiController.IsTyping)
         {
@@ -163,6 +164,7 @@ public class GameManager : MonoBehaviour
             case "dialogue": HandleDialogue(data); break;
             case "choice": HandleChoice(data); return;
             case "jump": HandleJump(data); return;
+            case "inputName": HandleNameInput(data); return;
             default:
                 if (data.CharacterID != "option" && data.CharacterID != "timeout" && !string.IsNullOrEmpty(data.EventType))
                 {
@@ -188,7 +190,9 @@ public class GameManager : MonoBehaviour
             expressionSprite = character.expressions.Find(e => e.name == data.Expression)?.sprite;
         }
 
-        uiController.ShowDialogue(characterName, data.Dialogue, character, data.AnimationDuring, OnDialogueLineFinished);
+        string processedDialogue = data.Dialogue.Replace("[PLAYER_NAME]", currentGameState.playerName);
+
+        uiController.ShowDialogue(characterName, processedDialogue, character, data.AnimationDuring, OnDialogueLineFinished);
 
         uiController.ShowCharacter(expressionSprite);
 
@@ -374,6 +378,7 @@ public class GameManager : MonoBehaviour
     public GameData GetCurrentGameData()
     {
         currentGameState.characterAffections = new Dictionary<string, int>(this.characterAffections);
+        currentGameState.playerName = this.currentGameState.playerName; // Ensure the name is up-to-date
         return currentGameState;
     }
 
@@ -454,6 +459,22 @@ public class GameManager : MonoBehaviour
         text.text = "Menu";
         text.color = Color.white;
         text.alignment = TMPro.TextAlignmentOptions.Center;
+    }
+    #endregion
+
+    #region Name Input
+    private void HandleNameInput(ScenarioData data)
+    {
+        isWaitingForNameInput = true;
+        isTransitioning = false; // Allow UI interaction
+        uiController.ShowNameInput(OnNameConfirmed);
+    }
+
+    private void OnNameConfirmed(string newName)
+    {
+        currentGameState.playerName = newName;
+        isWaitingForNameInput = false;
+        GoToNextLine();
     }
     #endregion
 }

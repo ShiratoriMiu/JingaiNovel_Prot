@@ -11,6 +11,7 @@ public class GameData : ISerializationCallbackReceiver
     public string expression;
     public string backgroundImageName;
     public string saveTimestamp;
+    public string playerName;
 
     // The dictionary is used for easy access during gameplay, but won't be serialized directly.
     [NonSerialized]
@@ -56,6 +57,7 @@ public class GameData : ISerializationCallbackReceiver
         expression = "";
         backgroundImageName = "";
         saveTimestamp = "";
+        playerName = "主人公";
         characterAffections = new Dictionary<string, int>();
     }
 }
