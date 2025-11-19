@@ -190,6 +190,7 @@ public class GameManager : MonoBehaviour
             expressionSprite = character.expressions.Find(e => e.name == data.Expression)?.sprite;
         }
 
+        Debug.Log($"Replacing '[PLAYER_NAME]' in dialogue. Current Player Name: '{currentGameState.playerName}'. Original Dialogue: '{data.Dialogue}'");
         string processedDialogue = data.Dialogue.Replace("[PLAYER_NAME]", currentGameState.playerName);
 
         uiController.ShowDialogue(characterName, processedDialogue, character, data.AnimationDuring, OnDialogueLineFinished);
@@ -378,7 +379,6 @@ public class GameManager : MonoBehaviour
     public GameData GetCurrentGameData()
     {
         currentGameState.characterAffections = new Dictionary<string, int>(this.characterAffections);
-        currentGameState.playerName = this.currentGameState.playerName; // Ensure the name is up-to-date
         return currentGameState;
     }
 
