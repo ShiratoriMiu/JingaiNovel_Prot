@@ -439,10 +439,8 @@ public class UIController : MonoBehaviour
     private bool IsNameValid(string name, out string foundNGWord)
     {
         foundNGWord = null;
-        if (string.IsNullOrWhiteSpace(name))
-        {
-            return false;
-        }
+
+        // Removed the IsNullOrWhiteSpace check from here. It will be handled in the calling method.
 
         if (name.Length > 10)
         {
@@ -464,26 +462,33 @@ public class UIController : MonoBehaviour
     private void OnNameInputSubmit()
     {
         string playerName = nameInputField.text;
-        string foundNGWord;
 
+        if (string.IsNullOrWhiteSpace(playerName))
+        {
+            playerName = "主人公";
+        }
+
+        string foundNGWord;
         if (!IsNameValid(playerName, out foundNGWord))
         {
             if (foundNGWord != null)
             {
-                // NG word was found
                 ngWordWarningPopup?.SetActive(true);
-                nameInputField.text = ""; // Clear the input as requested
+                nameInputField.text = "";
             }
             else
             {
-                // Name is empty or too long
-                // For now, we just log a warning. A dedicated popup could be implemented here.
-                Debug.LogWarning("Player name is invalid (empty or too long).");
+                Debug.LogWarning("Player name is too long.");
             }
             return;
         }
 
-        confirmNameText.text = playerName;
+        ShowConfirmationPopup(playerName);
+    }
+
+    private void ShowConfirmationPopup(string name)
+    {
+        confirmNameText.text = name;
         nameInputPanel?.SetActive(false);
         nameConfirmPopup?.SetActive(true);
     }
